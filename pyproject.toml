@@ -1,0 +1,45 @@
+[project]
+name = "mlops-classification-e-commerce"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  #"tensorflow==2.13.0",
+  "numpy==1.24.3",
+  "pandas==2.0.3",
+  "scikit-learn==1.3.0",
+  "matplotlib==3.7.2",
+  "seaborn==0.12.2",
+  "Pillow==10.0.0",
+  "nltk==3.8.1",
+  "tqdm==4.65.1",
+  # Jupyter/notebook
+  "jupyter==1.0.0",
+  "ipython==8.14.0",
+  # Utils
+  "requests==2.31.0",
+  "python-dotenv==1.0.0",
+  # Windows only
+  "pywin32==306; sys_platform == 'win32'",
+  #"tensorflow-intel==2.13.0; sys_platform == 'win32'",
+  "box>=0.1.5",
+  "python-box==7.3.2",
+  "ftfy==6.3.1",
+  "bs4==0.0.2",
+  "spacy==3.8.9",
+  "spacy-langdetect==0.1.2",
+  "spacy-legacy==3.0.12",
+  "spacy-loggers==1.0.5",
+  "deep-translator==1.11.4",
+  "pydantic==2.12.4",
+  "ollama==0.6.1",
+  "pip>=25.3",
+  "torch>=2.9.1",
+  "transformers>=4.57.3",
+  "datasets>=2.19.1",
+  "evaluate>=0.4.6",
+  "accelerate>=1.12.0",
+  "fastapi>=0.128.0",
+  "uvicorn>=0.40.0",
+]

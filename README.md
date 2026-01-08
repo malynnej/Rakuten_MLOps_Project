@@ -1,15 +1,16 @@
 Project Name
 ==============================
 
-This project is a starting Pack for MLOps projects based on the subject "movie_recommandation". It's not perfect so feel free to make some modifications on it.
+Rakuten Challenge MLOps
 
-Project Organization
+
+Project Organization (`TO BE UPDATED`)
 ------------
 
     ├── LICENSE
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data from third party sources -> the external data you want to make a prediction on
+    │   │   ├── external       <- Data from third party sources -> the external data you want to make a prediction on
     │   ├── preprocessed      <- The final, canonical data sets for modeling.
     |   |  ├── image_train <- Where you put the images of the train set
     |   |  ├── image_test <- Where you put the images of the predict set
@@ -23,44 +24,73 @@ Project Organization
     │
     ├── models             <- Trained and serialized models, model predictions, or model summaries
     │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
+    ├── notebooks          <- Jupyter notebooks for testing purposes
     │
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
     │
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
-    │   ├── main.py        <- Scripts to train models 
-    │   ├── predict.py     <- Scripts to use trained models to make prediction on the files put in ../data/preprocessed
+    │   ├── api            <- API file(s)
     │   │
     │   ├── data           <- Scripts to download or generate data
-    │   │   ├── check_structure.py    
-    │   │   ├── import_raw_data.py 
-    │   │   └── make_dataset.py
+    │   │   ├── check_structure.py    <- checks if a file or folder exists
+    │   │   ├── import_raw_data.py    <- imports raw data
+    │   │   │   
+    │   │   └── raw        <- raw data files
+    │   │       ├── image_train    <- Where you put the images of the train set
+    │   │       ├── image_test     <- Where you put the images of the test set
+    │   │       ├── X_train_update.csv     <- The text train csv file with the columns designation, description, productid imageid
+    │   │       ├── Y_train_update.csv     <- The text train csv file with the target classes
+    │   │       ├── X_test_update.csv     <- The text test csv file with the columns designation, description, productid imageid (not used currently as there is no corresponding y_test file provided)
+    │   │   │   
+    │   │   └── preprocessed        <- preprocessed data files
+    │   │   │   
+    │   │   └── processed        <- processed encoded test dataset
+    │   │   │   
+    │   │   └── results        <- evaluation metrics (confusion matrix and classifation report)
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── features       <- Preprocessing scripts to turn raw data into features for modeling with preprocessing_pipeline.py as main pipeline
     │   │
-    │   ├── models                
-    │   │   └── train_model.py
-    │   └── config         <- Describe the parameters used in train_model.py and predict_model.py
+    │   ├── models
+    │   │   ├── evaluate_text.py    <- evaluation of trained text model (outputs confusion matrix and classification report )                
+    │   │   ├── predict_text.py    <- prediction with trained text model 
+    │   │   └── train_model_text.py   <- text training file
+
 
 --------
 
-Once you have downloaded the github repo, open the anaconda powershell on the root of the project and follow those instructions :
+Setup Local Repository
+------------
 
-> `conda create -n "Rakuten-project"`    <- It will create your conda environement
+Once you have downloaded and connected the github repo, open the folder in your command tool and follow those instructions :
 
-> `conda activate Rakuten-project`       <- It will activate your environment
+ATTENTION: Please make sure to be at the project root before executing commands (MLOps_classification_e-commerce)!
 
-> `conda install pip`                    <- May be optionnal
+Set up of virtual environment
+> `curl -LsSf https://astral.sh/uv/install.sh | sh`    <- It will install uv, if needed, check with 'export PATH="$HOME/.local/bin:$PATH" ' that uv is correctly located, optionally check with 'uv --version' that the uv is installed correctly
 
-> `pip install -r requirements.txt`      <- It will install the required packages
+> `uv venv .venv`       <- It will create the virtual environment 
 
-> `python src/data/import_raw_data.py`   <- It will import the tabular data on data/raw/
+> `source .venv/bin/activate`            <- activate virtual environment
 
+> `uv init`      <- initialize project
+
+> `uv sync`   <-  synchronize environment
+
+Install new libraries
+------------
+If you work on this repository and install/add new libraries, please follow this workflow:
+
+> `uv add <library_name>`   <-  add libraries to pyproject.toml
+> `uv sync`     <- install/update libraries according to pyproject.toml
+> `uv export --no-hashes --format requirements-txt > requirements.txt`  <- creates/updates requirements.txt
+
+Import raw data
+------------
+The raw data is not tracked by Github due to its size (added to .gitignore), so please import it once in your local repository:
+
+Import images
 > Upload the image data folder set directly on local from https://challengedata.ens.fr/participants/challenges/35/, you should save the folders image_train and image_test respecting the following structure
 
     ├── data
@@ -68,17 +98,25 @@ Once you have downloaded the github repo, open the anaconda powershell on the ro
     |   |  ├── image_train 
     |   |  ├── image_test 
 
-> `python src/data/make_dataset.py data/raw data/preprocessed`      <- It will copy the raw dataset and paste it on data/preprocessed/
+Import text data
+> `python data/import_raw_data.py`  <- imports raw data, execute from src folder (cd command to src folder)
 
-> `python src/main.py`                   <- It will train the models on the dataset and save them in models. By default, the number of epochs = 1
+Preprocessing
+------------
+> `uv run python -m src.features.preprocessing_pipeline`  <- run preprocessing (due to path issues use uv run instead of just python)
 
-> `python src/predict.py`                <- It will use the trained models to make a prediction (of the prdtypecode) on the desired data, by default, it will predict on the train. You can pass the path to data and images as arguments if you want to change it
->
-    Exemple : python src/predict_1.py --dataset_path "data/preprocessed/X_test_update.csv" --images_path "data/preprocessed/image_test"
-                                        
-                                         The predictions are saved in data/preprocessed as 'predictions.json'
+> `uv run python -m src.models.train_model_text`    <- run training
 
-> You can download the trained models loaded here : https://drive.google.com/drive/folders/1fjWd-NKTE-RZxYOOElrkTdOw2fGftf5M?usp=drive_link and insert them in the models folder
-> 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
-python make_dataset.py "../../data/raw" "../../data/preprocessed"
+Evaluation
+------------
+> `uv run python -m src.models.evaluate_text --model_path ./models/bert-rakuten-final --dataset_path ./src/data/processed/test_dataset --output_dir ./src/data/results/evaluation`  <- run evaluation (confusion matrix + class report)
+
+API
+------------
+`uvicorn src.api.api:app --reload`   <- run API (stop with CTRL + C)
+
+Docs accessible (if API is running):
+http://127.0.0.1:8000/docs
+
+
+

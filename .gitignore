@@ -1,3 +1,23 @@
+##########################################################
+### new settings
+##########################################################
+
+# venv
+.venv
+venv
+
+# exclude models
+/models/bert-rakuten-final
+/models/Archive
+
+#exclude raw and preprocessed data 
+/src/data/raw
+/src/data/preprocessed/images
+
+##########################################################
+### down below are .gitignore settings given from template
+##########################################################
+
 #deep learning models
 *.h5
 

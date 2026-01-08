@@ -1,0 +1,18 @@
+Data:
+  test_size: 0.2
+  random_state: 42
+
+DecodeEncode:
+  html_to_text : True
+  words_encoding : True
+
+TextOutlier:
+  llm: "en_core_web_sm"
+  word_count_threshold: 200
+  sentence_normalization: True
+  similarity_threshold: 0.8
+  factor: 1
+
+ExecFlags:
+  TextCleaningFlag: True
+  TransformTextOutliersFlag: True
