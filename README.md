@@ -8,17 +8,8 @@ Project Organization (`TO BE UPDATED`)
 ------------
 
     ├── LICENSE
+    │
     ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   │   ├── external       <- Data from third party sources -> the external data you want to make a prediction on
-    │   ├── preprocessed      <- The final, canonical data sets for modeling.
-    |   |  ├── image_train <- Where you put the images of the train set
-    |   |  ├── image_test <- Where you put the images of the predict set
-    |   |  ├── X_train_update.csv    <- The csv file with te columns designation, description, productid, imageid like in X_train_update.csv
-    |   |  ├── X_test_update.csv    <- The csv file with te columns designation, description, productid, imageid like in X_train_update.csv
-    │   └── raw            <- The original, immutable data dump.
-    |   |  ├── image_train <- Where you put the images of the train set
-    |   |  ├── image_test <- Where you put the images of the predict set
     │
     ├── logs               <- Logs from training and predicting
     │
@@ -63,16 +54,22 @@ Project Organization (`TO BE UPDATED`)
 Setup Local Repository
 ------------
 
+> `git clone https://github.com/malynnej/Rakuten_MLOps_Project.git ` <- clones remote repository
+
 Once you have downloaded and connected the github repo, open the folder in your command tool and follow those instructions :
 
-ATTENTION: Please make sure to be at the project root before executing commands (MLOps_classification_e-commerce)!
+ATTENTION: Please make sure to be at the project root before executing commands (cd to MLOps_classification_e-commerce)!
 
 Set up of virtual environment
-> `curl -LsSf https://astral.sh/uv/install.sh | sh`    <- It will install uv, if needed, check with 'export PATH="$HOME/.local/bin:$PATH" ' that uv is correctly located, optionally check with 'uv --version' that the uv is installed correctly
+> `curl -LsSf https://astral.sh/uv/install.sh | sh`    <- It will install uv on MAC, if needed, check with 'export PATH="$HOME/.local/bin:$PATH" ' that uv is correctly located, optionally check with 'uv --version' that the uv is installed correctly
 
-> `uv venv .venv`       <- It will create the virtual environment 
+> `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" ` <- install uv on Windows/Powershell, optionally check with 'uv --version' that the uv is installed correctly
 
-> `source .venv/bin/activate`            <- activate virtual environment
+> `uv sync --python 3.11`   <- sync environment, installs python and packages, creates .venv in directory
+
+> `source .venv/bin/activate`            <- activate virtual environment on Mac
+
+> `.venv\Scripts\activate`            <- activate virtual environment on Windows
 
 > `uv init`      <- initialize project
 
