@@ -116,4 +116,11 @@ Docs accessible (if API is running):
 http://127.0.0.1:8000/docs
 
 
-
+Docker
+------------
+* Start / stop all services with docker compose
+  > `docker compose up`
+  > `docker compose down`
+* Services:
+  - `src/api`: The ML model API
+  - `tests/test_api`: Tests for the model API
