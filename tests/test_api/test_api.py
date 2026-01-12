@@ -8,15 +8,6 @@ api_address = os.environ.get('API_ADDRESS', default='127.0.0.1')
 api_port = os.environ.get('API_PORT', default='8000')
 
 
-def wait_for_api():
-    time.sleep(5)
-
-    url=f'http://{api_address}:{api_port}/health'
-    r = requests.get(url=url)
-
-    assert r.status_code == 200
-
-
 def log(logString):
     # print result
     if os.environ.get('LOG_STDOUT') == '1':
@@ -129,7 +120,5 @@ def test_info():
 
 
 if __name__ == "__main__":
-    wait_for_api()
-
     test_health()
     test_info()
