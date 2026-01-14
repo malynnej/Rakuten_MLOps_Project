@@ -10,10 +10,6 @@ venv
 /models/bert-rakuten-final
 /models/Archive
 
-#exclude raw and preprocessed data 
-/src/data/raw
-/src/data/preprocessed/images
-
 ##########################################################
 ### down below are .gitignore settings given from template
 ##########################################################
@@ -99,7 +95,8 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+#/data/
+/data/raw/
 
 # Mac OS-specific storage files
 .DS_Store
