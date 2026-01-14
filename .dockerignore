@@ -1,0 +1,12 @@
+# Python cache files
+__pycache__
+*.pyc
+
+# virtual environments
+.venv
+
+# model archive
+/models/Archive
+
+# git files
+.gitkeep

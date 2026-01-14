@@ -1,0 +1,40 @@
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
+    deploy:
+      replicas: 1 # TODO: adjust replicas for production
+    container_name: rakuten_mlops_api
+    networks: 
+      - rakuten_mlops_network
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000" # TODO: remove port mapping (visibility from host) for production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  test_api:
+    build: tests/test_api
+    container_name: test_api
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: 
+      - rakuten_mlops_network
+    volumes:
+      - ./logs:/logs
+    environment:
+      API_ADDRESS: rakuten_mlops_api
+      API_PORT: 8000
+      LOG_STDOUT: 1  # TODO: disable stdout logging for production
+      LOG_FILE: 1
+      LOGDIR: /logs
+
+networks:
+  rakuten_mlops_network:

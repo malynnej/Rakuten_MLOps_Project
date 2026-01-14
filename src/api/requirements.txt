@@ -1,0 +1,17 @@
+### for predict endpoint
+fastapi>=0.128.0
+uvicorn>=0.40.0
+pydantic==2.12.4
+torch>=2.9.1
+transformers>=4.57.3
+
+### additionally for retrain endpoint
+datasets>=2.19.1
+scikit-learn==1.3.0
+numpy==1.24.3
+pandas==2.0.3
+evaluate>=0.4.6
+
+### additionally for evaluate endpoint
+matplotlib==3.7.2
+seaborn==0.12.2
