@@ -11,9 +11,9 @@ from pathlib import Path
 app = FastAPI(title="Rakuten ML Pipeline API")
 
 # Import your modules
-from src.models.predict_text import TextPredictor
-from src.models.train_model_text import train_bert_model
-from src.models.evaluate_text import ModelEvaluator
+from src.predict.predict_text import TextPredictor
+from src.train.train_model_text import train_bert_model
+from src.evaluate.evaluate_text import ModelEvaluator
 
 # Global predictor (loaded once at startup)
 predictor = None
