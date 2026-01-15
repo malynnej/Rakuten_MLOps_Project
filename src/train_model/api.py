@@ -1,23 +1,22 @@
-# Complete API with all endpoints
+# Train API
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException, File, UploadFile
+import os
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
-import pandas as pd
+from typing import Optional
 from datetime import datetime
-import json
-from pathlib import Path
 
-app = FastAPI(title="Rakuten ML Pipeline API")
+app = FastAPI(title="Rakuten ML Train API")
 
 # Import your modules
 from src.predict.predict_text import TextPredictor
-from src.train.train_model_text import train_bert_model
-from src.evaluate.evaluate_text import ModelEvaluator
+from src.train_model.train_model_text import train_bert_model
 
 # Global predictor (loaded once at startup)
 predictor = None
-current_model_path = "./models/bert-rakuten-final"
+models_dir = os.environ.get("MODELS_DIR", "./models")
+model_name = os.environ.get("MODEL_NAME", "bert-rakuten-final")
+current_model_path = os.path.join(models_dir, model_name)
 
 @app.on_event("startup")
 async def load_model():
@@ -25,82 +24,6 @@ async def load_model():
     global predictor
     predictor = TextPredictor(current_model_path)
     print("Model loaded at startup")
-
-
-# ============================================
-# PREDICTION ENDPOINTS
-# ============================================
-
-class PredictRequest(BaseModel):
-    text: str
-    return_top5: bool = False
-
-class BatchPredictRequest(BaseModel):
-    texts: List[str]
-    return_top5: bool = False
-
-@app.post("/predict")
-async def predict_single(request: PredictRequest):
-    """Predict category for single text"""
-    try:
-        result = predictor.predict(request.text, return_probabilities=request.return_top5)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/predict/batch")
-async def predict_batch(request: BatchPredictRequest):
-    """Predict categories for multiple texts"""
-    try:
-        results = predictor.predict(request.texts, return_probabilities=request.return_top5)
-        return {"predictions": results, "count": len(results)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================
-# EVALUATION ENDPOINT
-# ============================================
-
-class EvaluateRequest(BaseModel):
-    dataset_path: str  # Path to tokenized test dataset
-    output_dir: str = "./src/data/results/evaluation"
-    batch_size: int = 16
-
-@app.post("/evaluate")
-async def evaluate_model(request: EvaluateRequest, background_tasks: BackgroundTasks):
-    """
-    Evaluate model on test dataset and generate confusion matrix + classification report.
-    Runs in background to avoid timeout.
-    """
-    def evaluation_job():
-        try:
-            from datasets import load_from_disk
-            
-            # Load dataset
-            dataset = load_from_disk(request.dataset_path)
-            test_dataset = dataset["test"]
-            
-            # Evaluate
-            evaluator = ModelEvaluator(current_model_path)
-            results = evaluator.evaluate_dataset(
-                test_dataset,
-                batch_size=request.batch_size,
-                output_dir=request.output_dir
-            )
-            
-            print(f"Evaluation complete - Results saved to {request.output_dir}")
-            
-        except Exception as e:
-            print(f"Evaluation failed: {e}")
-    
-    background_tasks.add_task(evaluation_job)
-    
-    return {
-        "status": "evaluation_started",
-        "message": f"Evaluation job submitted. Results will be saved to {request.output_dir}",
-        "timestamp": datetime.now().isoformat()
-    }
 
 
 # ============================================
@@ -175,23 +98,6 @@ async def retrain_model(request: RetrainRequest, background_tasks: BackgroundTas
 async def get_retrain_status():
     """Check retraining status"""
     return retraining_status
-
-
-# ============================================
-# DATA PIPELINE ENDPOINTS (Future)
-# ============================================
-
-@app.post("/data/import")
-async def import_raw_data():
-    """Trigger raw data import"""
-    # Call import_raw_data.py function
-    pass
-
-@app.post("/data/preprocess")
-async def preprocess_data():
-    """Trigger preprocessing pipeline"""
-    # Call preprocessing_pipeline.py function
-    pass
 
 
 # ============================================
