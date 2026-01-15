@@ -17,6 +17,10 @@ Rakuten_MLOps_Project
 │   │   ├── evaluation
 │   │   └── ... (maybe predictions, etc.)
 │   └── <model_2>
+├── deployments
+│   ├── nginx
+│   │   └── nginx.conf
+│   └── ... (more services)
 ├── src
 │   ├── data
 │   │   ├── import_raw.py
@@ -39,9 +43,6 @@ Rakuten_MLOps_Project
 │   │   ├── api.py
 │   │   ├── Dockerfile
 │   │   └── pyproject.toml
-│   ├── nginx
-│   │   ├── Dockerfile
-│   │   └── nginx.conf
 │   └── ... (more services)
 ├── tests
 │   ├── test_predict_api
@@ -51,8 +52,10 @@ Rakuten_MLOps_Project
 │   └── pyproject.toml
 ├── notebooks
 └── logs
+Makefile
 docker-compose.yml
 pyproject.toml
 uv.lock
 .gitignore
 ```
+generated with [ASCII Text Tree Generator](https://www.text-tree-generator.com/)
