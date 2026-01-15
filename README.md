@@ -129,5 +129,7 @@ http://127.0.0.1:8000/docs
 Start services
 --------------
 * Start / stop all services with make
-  > `make run_apis`
-  > `make stop_apis`
+  ```
+  make run_apis
+  make stop_apis
+  ```
