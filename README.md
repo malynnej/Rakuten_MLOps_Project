@@ -75,6 +75,16 @@ Set up of virtual environment
 
 > `uv sync`   <-  synchronize environment
 
+* Install GNU Make (commands from ChatGPT, not tested!)
+  - For Linux/Ubuntu, run `sudo apt-get install build-essential` in the terminal.
+  - For Windows, download the installer from the GnuWin32 website.
+  - For Mac, ensure Xcode is installed and then run `xcode-select --install` in the terminal.
+
+* Install Docker
+  - [Docker Engine](https://docs.docker.com/engine/install/)
+  - [Docker Desktop](https://docs.docker.com/desktop/)
+
+
 Install new libraries
 ------------
 If you work on this repository and install/add new libraries, please follow this workflow:
@@ -116,11 +126,8 @@ Docs accessible (if API is running):
 http://127.0.0.1:8000/docs
 
 
-Docker
-------------
-* Start / stop all services with docker compose
-  > `docker compose up --build`
-  > `docker compose down`
-* Services:
-  - `src/api`: The ML model API
-  - `tests/test_api`: Tests for the model API
+Start services
+--------------
+* Start / stop all services with make
+  > `make run_apis`
+  > `make stop_apis`
