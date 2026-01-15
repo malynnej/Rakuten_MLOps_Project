@@ -1,4 +1,4 @@
-.PHONY: lockfiles
+.PHONY: lockfiles clean_locks run_apis stop_apis clean_logs
 
 UV := uv
 
