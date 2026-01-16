@@ -16,7 +16,7 @@ def log(logString):
     # log to file
     if os.environ.get('LOG_FILE') == '1':
         logDir = os.environ.get('LOGDIR', default='.')
-        logFn = os.path.join(logDir, 'test_log.log')
+        logFn = os.path.join(logDir, 'test_predict_api.log')
         with open(logFn, 'a') as file:
             file.write(logString)
             file.write('\n\n')

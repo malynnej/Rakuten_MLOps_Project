@@ -1,0 +1,23 @@
+[project]
+name = "train_model"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.9.1",
+    "transformers>=4.57.3",
+    "numpy==1.24.3",
+    "pandas==2.0.3",
+    "scikit-learn==1.3.0",
+    "datasets>=2.19.1",
+    "evaluate>=0.4.6",
+]
+
+[dependency-groups]
+api = [
+    "fastapi>=0.128.0",
+    "pydantic>=2.12.4",
+    "uvicorn>=0.40.0",
+]
+
+[tool.uv]
+default-groups = "all"
