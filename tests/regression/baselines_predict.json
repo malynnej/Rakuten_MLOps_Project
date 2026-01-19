@@ -1,0 +1,208 @@
+{
+  "SIMPLE": {
+    "Solar powered garden lamp with automatic night light sensor": {
+      "text": "Solar powered garden lamp with automatic night light sensor",
+      "predicted_category": 1320,
+      "confidence": 0.4355848431587219,
+      "predicted_index": 12
+    },
+    "Portable handheld console gaming device with 400 classic games": {
+      "text": "Portable handheld console gaming device with 400 classic games",
+      "predicted_category": 60,
+      "confidence": 0.6048978567123413,
+      "predicted_index": 3
+    },
+    "Professional carpet cleaning equipment rental": {
+      "text": "Professional carpet cleaning equipment rental",
+      "predicted_category": 1560,
+      "confidence": 0.3570128381252289,
+      "predicted_index": 13
+    },
+    "Leather office chair with ergonomic lumbar support": {
+      "text": "Leather office chair with ergonomic lumbar support",
+      "predicted_category": 1560,
+      "confidence": 0.6668795943260193,
+      "predicted_index": 13
+    },
+    "Zombie action figure collectible model": {
+      "text": "Zombie action figure collectible model",
+      "predicted_category": 1280,
+      "confidence": 0.6743615865707397,
+      "predicted_index": 7
+    }
+  },
+  "WITH_PROBABILITIES": {
+    "Solar powered garden lamp with automatic night light sensor": {
+      "text": "Solar powered garden lamp with automatic night light sensor",
+      "predicted_category": 1320,
+      "confidence": 0.4355848431587219,
+      "predicted_index": 12,
+      "top_5_predictions": [
+        {
+          "category": 1320,
+          "probability": 0.4355848431587219
+        },
+        {
+          "category": 2060,
+          "probability": 0.28270480036735535
+        },
+        {
+          "category": 2582,
+          "probability": 0.12645651400089264
+        },
+        {
+          "category": 1302,
+          "probability": 0.05795377492904663
+        },
+        {
+          "category": 1560,
+          "probability": 0.03170687332749367
+        }
+      ]
+    },
+    "Portable handheld console gaming device with 400 classic games": {
+      "text": "Portable handheld console gaming device with 400 classic games",
+      "predicted_category": 60,
+      "confidence": 0.6048978567123413,
+      "predicted_index": 3,
+      "top_5_predictions": [
+        {
+          "category": 60,
+          "probability": 0.6048978567123413
+        },
+        {
+          "category": 50,
+          "probability": 0.30758175253868103
+        },
+        {
+          "category": 2462,
+          "probability": 0.04197001829743385
+        },
+        {
+          "category": 40,
+          "probability": 0.020386163145303726
+        },
+        {
+          "category": 1281,
+          "probability": 0.00995009858161211
+        }
+      ]
+    },
+    "Professional carpet cleaning equipment rental": {
+      "text": "Professional carpet cleaning equipment rental",
+      "predicted_category": 1560,
+      "confidence": 0.3570128381252289,
+      "predicted_index": 13,
+      "top_5_predictions": [
+        {
+          "category": 1560,
+          "probability": 0.3570128381252289
+        },
+        {
+          "category": 2060,
+          "probability": 0.14854709804058075
+        },
+        {
+          "category": 10,
+          "probability": 0.13992205262184143
+        },
+        {
+          "category": 2582,
+          "probability": 0.10100218653678894
+        },
+        {
+          "category": 1320,
+          "probability": 0.06663165241479874
+        }
+      ]
+    },
+    "Leather office chair with ergonomic lumbar support": {
+      "text": "Leather office chair with ergonomic lumbar support",
+      "predicted_category": 1560,
+      "confidence": 0.6668795943260193,
+      "predicted_index": 13,
+      "top_5_predictions": [
+        {
+          "category": 1560,
+          "probability": 0.6668795943260193
+        },
+        {
+          "category": 2582,
+          "probability": 0.08913016319274902
+        },
+        {
+          "category": 1320,
+          "probability": 0.07035176455974579
+        },
+        {
+          "category": 1920,
+          "probability": 0.051004890352487564
+        },
+        {
+          "category": 2060,
+          "probability": 0.04276207834482193
+        }
+      ]
+    },
+    "Zombie action figure collectible model": {
+      "text": "Zombie action figure collectible model",
+      "predicted_category": 1280,
+      "confidence": 0.6743615865707397,
+      "predicted_index": 7,
+      "top_5_predictions": [
+        {
+          "category": 1280,
+          "probability": 0.6743615865707397
+        },
+        {
+          "category": 1140,
+          "probability": 0.28845635056495667
+        },
+        {
+          "category": 1281,
+          "probability": 0.011954786255955696
+        },
+        {
+          "category": 50,
+          "probability": 0.0069719948805868626
+        },
+        {
+          "category": 1180,
+          "probability": 0.004944822750985622
+        }
+      ]
+    }
+  },
+  "BATCH_PREDICTION": {
+    "Solar powered garden lamp with automatic night light sensor": {
+      "text": "Solar powered garden lamp with automatic night light sensor",
+      "predicted_category": 1320,
+      "confidence": 0.43558502197265625,
+      "predicted_index": 12
+    },
+    "Portable handheld console gaming device with 400 classic games": {
+      "text": "Portable handheld console gaming device with 400 classic games",
+      "predicted_category": 60,
+      "confidence": 0.6048984527587891,
+      "predicted_index": 3
+    },
+    "Professional carpet cleaning equipment rental": {
+      "text": "Professional carpet cleaning equipment rental",
+      "predicted_category": 1560,
+      "confidence": 0.35701215267181396,
+      "predicted_index": 13
+    },
+    "Leather office chair with ergonomic lumbar support": {
+      "text": "Leather office chair with ergonomic lumbar support",
+      "predicted_category": 1560,
+      "confidence": 0.6668797135353088,
+      "predicted_index": 13
+    },
+    "Zombie action figure collectible model": {
+      "text": "Zombie action figure collectible model",
+      "predicted_category": 1280,
+      "confidence": 0.6743615865707397,
+      "predicted_index": 7
+    }
+  }
+}
