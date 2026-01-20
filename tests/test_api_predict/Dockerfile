@@ -1,7 +1,4 @@
-FROM python:3.11-slim
-
-# install uv from prebuilt image
-COPY --from=ghcr.io/astral-sh/uv:0.9.22 /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 WORKDIR /tests
 
