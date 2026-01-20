@@ -26,7 +26,10 @@ services:
       retries: 12
 
   test_api_predict:
-    build: tests/test_api_predict
+    build: 
+      context: tests/test_api_predict
+      args:
+        LOGDIR: /logs
     container_name: test_api_predict
     depends_on:
       api_predict:
@@ -38,9 +41,6 @@ services:
     environment:
       API_ADDRESS: predict_api
       API_PORT: 8000
-      LOG_STDOUT: 1  # TODO: disable stdout logging for production
-      LOG_FILE: 1
-      LOGDIR: /logs
 
 networks:
   rakuten_mlops_network:

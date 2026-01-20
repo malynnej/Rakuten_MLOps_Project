@@ -11,6 +11,10 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
-COPY test_api_predict.py .
+COPY . .
 
-CMD ["python", "test_api_predict.py"]
+# set log file path
+ARG LOGDIR
+ENV LOGFILE=${LOGDIR}/test_api_predict.log
+
+CMD pytest | tee ${LOGFILE}
