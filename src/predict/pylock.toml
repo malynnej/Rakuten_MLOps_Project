@@ -422,10 +422,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/20/12/38679034af33278
 
 [[packages]]
 name = "pydantic"
-version = "2.12.4"
+version = "2.12.5"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/96/ad/a17bc283d7d81837c061c49e3eaa27a45991759a1b7eae1031921c6bd924/pydantic-2.12.4.tar.gz", upload-time = 2025-11-05T10:50:08Z, size = 821038, hashes = { sha256 = "0f8cb9555000a4b5b617f66bfd2566264c4984b27589d3b845685983e8ea85ac" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/82/2f/e68750da9b04856e2a7ec56fc6f034a5a79775e9b9a81882252789873798/pydantic-2.12.4-py3-none-any.whl", upload-time = 2025-11-05T10:50:06Z, size = 463400, hashes = { sha256 = "92d3d202a745d46f9be6df459ac5a064fdaa3c1c4cd8adcfa332ccf3c05f871e" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/69/44/36f1a6e523abc58ae5f928898e4aca2e0ea509b5aa6f6f392a5d882be928/pydantic-2.12.5.tar.gz", upload-time = 2025-11-26T15:11:46Z, size = 821591, hashes = { sha256 = "4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/5a/87/b70ad306ebb6f9b585f114d0ac2137d792b48be34d732d60e597c2f8465a/pydantic-2.12.5-py3-none-any.whl", upload-time = 2025-11-26T15:11:44Z, size = 463580, hashes = { sha256 = "e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d" } }]
 
 [[packages]]
 name = "pydantic-core"
@@ -851,17 +851,17 @@ wheels = [
 
 [[packages]]
 name = "tqdm"
-version = "4.65.1"
+version = "4.67.1"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/43/1d/05cab81c428967dad3fbf77e9a9e40a24a0199faccf52afc19e079205263/tqdm-4.65.1.tar.gz", upload-time = 2023-08-08T09:54:10Z, size = 167048, hashes = { sha256 = "2cb0075cc5269f8edac40bdeb757cc36ab5b6648caf014822b67e1a49fba141d" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/40/14/63f9a5bc62e8a50585b8a7a6de1ffab8eab09aaa5321b86127919ee7de02/tqdm-4.65.1-py3-none-any.whl", upload-time = 2023-08-08T09:54:08Z, size = 93155, hashes = { sha256 = "16181c62ad2c6f8f6f29876e66322faad1c7fd3cc70aa9cc25ff63e50d1da031" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", upload-time = 2024-11-24T20:12:22Z, size = 169737, hashes = { sha256 = "f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl", upload-time = 2024-11-24T20:12:19Z, size = 78540, hashes = { sha256 = "26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2" } }]
 
 [[packages]]
 name = "transformers"
-version = "4.57.5"
+version = "4.57.6"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/35/3a/7c90ee739871495f1a5cb9bdb074b42fe69357d7ccc1a8818af858d8e63b/transformers-4.57.5.tar.gz", upload-time = 2026-01-13T13:28:24Z, size = 10138171, hashes = { sha256 = "d631faea6bd32fc51962e482744afeaa70170c70e5e991cf8e355d7275631524" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/f8/de/4f95d22d9764659d2bd35065f383f3fe099699a9e6e89fa4728dbcd7244a/transformers-4.57.5-py3-none-any.whl", upload-time = 2026-01-13T13:28:16Z, size = 11993481, hashes = { sha256 = "5a1e0deb989cd0b8f141b6d8c9b7c956fc029cd288d68844f57dc0acbaf2fe39" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/35/67252acc1b929dc88b6602e8c4a982e64f31e733b804c14bc24b47da35e6/transformers-4.57.6.tar.gz", upload-time = 2026-01-16T10:38:39Z, size = 10134912, hashes = { sha256 = "55e44126ece9dc0a291521b7e5492b572e6ef2766338a610b9ab5afbb70689d3" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/03/b8/e484ef633af3887baeeb4b6ad12743363af7cce68ae51e938e00aaa0529d/transformers-4.57.6-py3-none-any.whl", upload-time = 2026-01-16T10:38:31Z, size = 11993498, hashes = { sha256 = "4c9e9de11333ddfe5114bc872c9f370509198acf0b87a832a0ab9458e2bd0550" } }]
 
 [[packages]]
 name = "triton"
