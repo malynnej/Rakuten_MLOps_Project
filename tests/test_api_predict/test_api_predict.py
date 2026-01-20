@@ -1,11 +1,11 @@
 import os
 from datetime import datetime
-import time
 import requests
 
+
 # definition of the API address and port
-api_address = os.environ.get('API_ADDRESS', default='127.0.0.1')
-api_port = os.environ.get('API_PORT', default='8000')
+API_ADDRESS = os.environ.get('API_ADDRESS', default='127.0.0.1')
+API_PORT = os.environ.get('API_PORT', default='8000')
 
 
 def log(logString):
@@ -41,7 +41,7 @@ def test_health():
         '==>  {test_status}'
     ))
 
-    url=f'http://{api_address}:{api_port}/health'
+    url=f'http://{API_ADDRESS}:{API_PORT}/health'
     r = requests.get(url=url)
 
     # query status and content
@@ -91,7 +91,7 @@ def test_info():
         '==>  {test_status}'
     ))
 
-    url=f'http://{api_address}:{api_port}/model/info'
+    url=f'http://{API_ADDRESS}:{API_PORT}/model/info'
     r = requests.get(url=url)
 
     # query status and content
