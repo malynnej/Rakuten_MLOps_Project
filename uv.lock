@@ -1937,11 +1937,15 @@ name = "test-api-predict"
 version = "0.1.0"
 source = { virtual = "tests/test_api_predict" }
 dependencies = [
+    { name = "pytest" },
     { name = "requests" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "requests", specifier = "==2.31.0" }]
+requires-dist = [
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "requests", specifier = "==2.31.0" },
+]
 
 [[package]]
 name = "threadpoolctl"
