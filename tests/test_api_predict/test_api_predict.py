@@ -13,7 +13,7 @@ API_PORT = os.environ.get('API_PORT', default='8000')
 class TestHealth:
     """Test class for health API endpoint"""
 
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def req(self):
         """Request on the health endpoint"""
         logging.info("Sending request to health endpoint")
@@ -21,7 +21,7 @@ class TestHealth:
         response = requests.get(url=url)
         return response
     
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def request_content(self, req):
         """Extract content from the health endpoint response"""
         logging.info("Extracting content from health endpoint response")
@@ -61,7 +61,7 @@ class TestHealth:
 class TestModelInfo:
     """Test class for model info API endpoint"""
 
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def req(self):
         """Request on the model info endpoint"""
         logging.info("Sending request to model info endpoint")
@@ -69,7 +69,7 @@ class TestModelInfo:
         response = requests.get(url=url)
         return response
     
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def request_content(self, req):
         """Extract content from the model info endpoint response"""
         logging.info("Extracting content from model info endpoint response")
@@ -81,7 +81,6 @@ class TestModelInfo:
         expected_status_code = 200
         assert req.status_code == expected_status_code, \
             f"Expected status code {expected_status_code}, got {req.status_code}"
-
 
     @pytest.mark.parametrize("key, expected_type", [
         ("model_path", str),
