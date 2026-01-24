@@ -6,7 +6,10 @@ from pydantic import BaseModel
 from typing import List
 from datetime import datetime
 
-app = FastAPI(title="Rakuten ML Predict API")
+app = FastAPI(
+    title="Rakuten ML Predict API",
+    root_path="/predict",
+)
 
 # Import your modules
 from src.predict.predict_text import TextPredictor
