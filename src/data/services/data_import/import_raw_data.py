@@ -12,7 +12,7 @@ def import_raw_data(raw_data_path, filenames, bucket_url):
     for filename in filenames:
         object_url = f"{bucket_url}{filename}"
         output_file = raw_data_path / filename
-        if output_file.exists():
+        if not output_file.exists():
             print(f"downloading {filename}...")
             response = requests.get(object_url)
             if response.status_code == 200:
