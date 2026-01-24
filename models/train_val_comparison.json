@@ -1,0 +1,7 @@
+{
+  "train_val_comparison": {
+    "train_loss": 0.8047,
+    "val_accuracy": 0.8305,
+    "val_loss": 0.5759
+  }
+}

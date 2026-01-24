@@ -1,123 +1,218 @@
-# Train API
+"""
+Training API - Background training with status tracking
+"""
 
 import os
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+import sys
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-app = FastAPI(title="Rakuten ML Train API")
+# Add parent directory to path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
-# Import your modules
-from src.predict.predict_text import TextPredictor
-from src.train_model.train_model_text import train_bert_model
+from services.train_model_text import train_bert_model
 
-# Global predictor (loaded once at startup)
-predictor = None
-models_dir = os.environ.get("MODELS_DIR", "./models")
-model_name = os.environ.get("MODEL_NAME", "bert-rakuten-final")
-current_model_path = os.path.join(models_dir, model_name)
-
-@app.on_event("startup")
-async def load_model():
-    """Load model when API starts"""
-    global predictor
-    predictor = TextPredictor(current_model_path)
-    print("Model loaded at startup")
+app = FastAPI(title="Rakuten ML Training API")
 
 
 # ============================================
-# RETRAINING ENDPOINT
+# GLOBAL STATE
 # ============================================
 
-retraining_status = {
-    "is_running": False,
-    "last_run": None,
-    "last_result": None
+# Training status tracker
+training_status = {
+    "is_training": False,
+    "current_epoch": None,
+    "status": "idle",
+    "metrics": None,
+    "last_training": None
 }
 
-class RetrainRequest(BaseModel):
-    model_path: str = "./models/bert-rakuten-final"
-    retrain_from_existing: bool = True
-    version: Optional[str] = None
 
-@app.post("/retrain")
-async def retrain_model(request: RetrainRequest, background_tasks: BackgroundTasks):
-    """Trigger model retraining"""
-    global retraining_status, predictor, current_model_path
+# ============================================
+# REQUEST MODELS
+# ============================================
+
+class TrainRequest(BaseModel):
+    retrain: bool = False
+    model_name: str = "bert-rakuten-final"
+
+
+# ============================================
+# TRAINING ENDPOINT
+# ============================================
+
+def run_training(retrain: bool, model_name: str):
+    """Background task for training"""
+    global training_status
     
-    if retraining_status["is_running"]:
-        raise HTTPException(status_code=409, detail="Retraining already in progress")
-    
-    def retrain_job():
-        global retraining_status, predictor, current_model_path
+    try:
+        # Update status
+        training_status["is_training"] = True
+        training_status["status"] = "training"
+        training_status["last_training"] = datetime.now().isoformat()
         
-        try:
-            retraining_status["is_running"] = True
-            retraining_status["started_at"] = datetime.now().isoformat()
-            
-            # Train model
-            metrics = train_bert_model(
-                retrain=request.retrain_from_existing,
-                model_path=request.model_path,
-                version=request.version
-            )
-            
-            # Update status
-            retraining_status["is_running"] = False
-            retraining_status["last_run"] = datetime.now().isoformat()
-            retraining_status["last_result"] = {
-                "status": "success",
-                "metrics": metrics
-            }
-            
-            # Reload predictor with new model
-            new_model_path = metrics.get("model_path", request.model_path)
-            predictor = TextPredictor(new_model_path)
-            current_model_path = new_model_path
-            
-            print(f"✅ Retraining complete - Model reloaded from {new_model_path}")
-            
-        except Exception as e:
-            retraining_status["is_running"] = False
-            retraining_status["last_run"] = datetime.now().isoformat()
-            retraining_status["last_result"] = {
-                "status": "failed",
-                "error": str(e)
-            }
-            print(f"Retraining failed: {e}")
+        print(f"\n{'='*60}")
+        print(f"BACKGROUND TRAINING STARTED")
+        print(f"{'='*60}\n")
+        print(f"Mode: {'Retraining' if retrain else 'Initial training'}")
+        print(f"Model: {model_name}")
+        
+        # Train model
+        trainer, metrics = train_bert_model(retrain=retrain, model_name=model_name)
+        
+        # Update status with success
+        training_status["is_training"] = False
+        training_status["status"] = "completed"
+        training_status["metrics"] = {
+            "accuracy": metrics.get("test_accuracy"),
+            "train_loss": metrics.get("final_train_loss"),
+            "test_loss": metrics.get("test_loss"),
+            "num_labels": metrics.get("num_labels"),
+            "trainable_params": metrics.get("trainable_params"),
+            "training_duration": metrics.get("training_duration_seconds")
+        }
+        
+        print(f"\n✅ Background training completed!")
+        print(f"   Test accuracy: {metrics.get('test_accuracy', 'N/A')}")
+        print(f"   Model saved to: {metrics.get('model_path', 'N/A')}")
+        
+    except Exception as e:
+        # Update status with error
+        training_status["is_training"] = False
+        training_status["status"] = f"failed: {str(e)}"
+        training_status["metrics"] = None
+        
+        print(f"\n❌ Background training failed: {e}")
+
+
+@app.post("/train")
+async def train(request: TrainRequest, background_tasks: BackgroundTasks):
+    """
+    Start model training.
+    Runs in background to avoid timeout.
     
-    background_tasks.add_task(retrain_job)
+    Example:
+        POST /train
+        {
+            "retrain": false,
+            "model_name": "bert-rakuten-final"
+        }
+    """
+    global training_status
+    
+    # Check if training already in progress
+    if training_status["is_training"]:
+        raise HTTPException(
+            status_code=409,
+            detail="Training already in progress. Check /status for details."
+        )
+    
+    # Start training in background
+    background_tasks.add_task(run_training, request.retrain, request.model_name)
     
     return {
-        "status": "retraining_started",
+        "status": "training_started",
+        "message": f"Training job submitted. Check /status for progress.",
+        "retrain": request.retrain,
+        "model_name": request.model_name,
         "timestamp": datetime.now().isoformat()
     }
 
-@app.get("/retrain/status")
-async def get_retrain_status():
-    """Check retraining status"""
-    return retraining_status
-
 
 # ============================================
-# HEALTH & INFO
+# STATUS & INFO ENDPOINTS
 # ============================================
+
+@app.get("/status")
+async def get_status():
+    """
+    Get current training status.
+    
+    Returns:
+        Current training status and metrics if completed
+    """
+    return {
+        "training_status": training_status,
+        "timestamp": datetime.now().isoformat()
+    }
+
 
 @app.get("/health")
 async def health_check():
-    """Health check"""
+    """
+    Health check endpoint.
+    
+    Returns:
+        API health status and training state
+    """
     return {
         "status": "healthy",
-        "current_model": current_model_path,
+        "service": "training-service",
+        "is_training": training_status["is_training"],
+        "last_training": training_status["last_training"],
         "timestamp": datetime.now().isoformat()
     }
 
-@app.get("/model/info")
-async def model_info():
-    """Get current model information"""
+
+@app.get("/results/latest")
+async def get_latest_results():
+    """
+    Get results from most recent training.
+    
+    Returns:
+        Latest training metrics or 404 if none available
+    """
+    if training_status["metrics"] is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No training results available"
+        )
+    
     return {
-        "model_path": current_model_path,
-        "num_classes": len(predictor.le.classes_),
-        "device": str(predictor.device)
+        "status": "success",
+        "metrics": training_status["metrics"],
+        "timestamp": training_status["last_training"]
     }
+
+
+# ============================================
+# ROOT ENDPOINT
+# ============================================
+
+@app.get("/")
+async def root():
+    """API root with usage information"""
+    return {
+        "service": "Rakuten ML Training API",
+        "version": "1.0.0",
+        "endpoints": {
+            "train": "POST /train - Start model training",
+            "status": "GET /status - Get training status",
+            "health": "GET /health - Health check",
+            "latest_results": "GET /results/latest - Latest training metrics"
+        },
+        "docs": "/docs",
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+# ============================================
+# RUN SERVER
+# ============================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Get port from environment or use default
+    port = int(os.environ.get("PORT", 8002))
+    
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        log_level="info"
+    )
