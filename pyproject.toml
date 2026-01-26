@@ -52,5 +52,6 @@ members = [
   "src/predict",
   "src/train_model",
   "src/evaluate_model",
+  "src/data",
   "tests/test_api_predict",
 ]

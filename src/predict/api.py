@@ -1,79 +1,144 @@
-# Predict API
-
-import os
+# src/predict/api.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List
-from datetime import datetime
+from typing import Optional, List
+import sys
+from pathlib import Path
 
-app = FastAPI(title="Rakuten ML Predict API")
+# Add parent directory to path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
-# Import your modules
-from src.predict.predict_text import TextPredictor
+from services.predict_text import PredictionService
 
-# Global predictor (loaded once at startup)
+app = FastAPI(title="Prediction Service - Rakuten MLOps")
+
+# Initialize prediction service at startup
 predictor = None
-models_dir = os.environ.get("MODELS_DIR", "./models")
-model_name = os.environ.get("MODEL_NAME", "bert-rakuten-final")
-current_model_path = os.path.join(models_dir, model_name)
 
 @app.on_event("startup")
-async def load_model():
-    """Load model when API starts"""
+async def startup_event():
+    """Initialize predictor when API starts"""
     global predictor
-    predictor = TextPredictor(current_model_path)
-    print("Model loaded at startup")
+    print("Initializing prediction service...")
+    predictor = PredictionService()
+    print("Prediction service ready!")
 
 
-# ============================================
-# PREDICTION ENDPOINTS
-# ============================================
-
-class PredictRequest(BaseModel):
+class TextInput(BaseModel):
     text: str
-    return_top5: bool = False
+    return_probabilities: bool = False
+    top_k: int = 5
 
-class BatchPredictRequest(BaseModel):
+
+class ProductInput(BaseModel):
+    designation: str
+    description: Optional[str] = ""
+    return_probabilities: bool = False
+    top_k: int = 5
+
+
+class BatchTextInput(BaseModel):
     texts: List[str]
-    return_top5: bool = False
+    batch_size: int = 32
+    return_probabilities: bool = False
+    top_k: int = 5
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "prediction-service",
+        "model_loaded": predictor is not None,
+        "device": str(predictor.device) if predictor else None
+    }
+
 
 @app.post("/predict")
-async def predict_single(request: PredictRequest):
-    """Predict category for single text"""
+async def predict_text(input_data: TextInput):
+    """
+    Predict category for single text.
+    
+    Example:
+        POST /predict
+        {
+            "text": "Nike running shoes",
+            "return_probabilities": true,
+            "top_k": 3
+        }
+    """
+    if predictor is None:
+        raise HTTPException(status_code=503, detail="Predictor not initialized")
+    
     try:
-        result = predictor.predict(request.text, return_probabilities=request.return_top5)
+        result = predictor.predict(
+            input_data.text,
+            return_probabilities=input_data.return_probabilities,
+            top_k=input_data.top_k
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/predict/batch")
-async def predict_batch(request: BatchPredictRequest):
-    """Predict categories for multiple texts"""
+
+@app.post("/predict/product")
+async def predict_product(input_data: ProductInput):
+    """
+    Predict category for product with designation and description.
+    
+    Example:
+        POST /predict/product
+        {
+            "designation": "Nike Air Max 90",
+            "description": "Classic running shoes",
+            "return_probabilities": true
+        }
+    """
+    if predictor is None:
+        raise HTTPException(status_code=503, detail="Predictor not initialized")
+    
     try:
-        results = predictor.predict(request.texts, return_probabilities=request.return_top5)
+        result = predictor.predict_product(
+            input_data.designation,
+            input_data.description,
+            return_probabilities=input_data.return_probabilities,
+            top_k=input_data.top_k
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/predict/batch")
+async def predict_batch(input_data: BatchTextInput):
+    """
+    Predict categories for multiple texts.
+    
+    Example:
+        POST /predict/batch
+        {
+            "texts": ["Nike shoes", "Adidas jacket", "Samsung phone"],
+            "batch_size": 32,
+            "return_probabilities": false
+        }
+    """
+    if predictor is None:
+        raise HTTPException(status_code=503, detail="Predictor not initialized")
+    
+    try:
+        results = predictor.predict_batch(
+            input_data.texts,
+            batch_size=input_data.batch_size,
+            return_probabilities=input_data.return_probabilities,
+            top_k=input_data.top_k
+        )
         return {"predictions": results, "count": len(results)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ============================================
-# HEALTH & INFO
-# ============================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
-@app.get("/health")
-async def health_check():
-    """Health check"""
-    return {
-        "status": "healthy",
-        "current_model": current_model_path,
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/model/info")
-async def model_info():
-    """Get current model information"""
-    return {
-        "model_path": current_model_path,
-        "num_classes": len(predictor.le.classes_),
-        "device": str(predictor.device)
-    }

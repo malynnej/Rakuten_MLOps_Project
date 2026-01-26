@@ -1,0 +1,30 @@
+data: 
+  raw: "data/raw"
+  preprocessed: "data/preprocessed"
+  X_train_raw: "X_train_update.csv"
+  y_train_raw: "Y_train_CVw08PX.csv"
+  bucket_raw: "https://mlops-project-db.s3.eu-west-1.amazonaws.com/classification_e-commerce/"
+  TextOutlierReport: "data/preprocessed/TextOutlierReport.txt"
+  TextDataFrameSavePath: "data/preprocessed"
+
+preprocessing:
+  train: "data/preprocessed/train.parquet"
+  val: "data/preprocessed/val.parquet"
+  test: "data/preprocessed/test.parquet"
+  holdout: "data/preprocessed/holdout_raw.parquet"
+
+models:
+  save_dir: "models"
+  checkpoints: "models/checkpoints"
+  final: "models/bert-rakuten-final"
+
+artifacts:
+  logs: "logs"
+  results: "results"
+
+storage:
+  base_path: "data"
+  type: "local"  # or "s3"
+
+results:
+  evaluation: "results"
