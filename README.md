@@ -51,7 +51,7 @@ Project Organization (`TO BE UPDATED`)
 
 --------
 
-Setup Local Repository
+Setup Local Repository (`TO BE UPDATED`)
 ------------
 
 > `git clone https://github.com/malynnej/Rakuten_MLOps_Project.git ` <- clones remote repository
@@ -85,7 +85,7 @@ Set up of virtual environment
   - [Docker Desktop](https://docs.docker.com/desktop/)
 
 
-Install new libraries
+Install new libraries (`TO BE UPDATED`)
 ------------
 If you work on this repository and install/add new libraries, please follow this workflow:
 
@@ -93,32 +93,36 @@ If you work on this repository and install/add new libraries, please follow this
 > `uv sync`     <- install/update libraries according to pyproject.toml
 > `uv export --no-hashes --format requirements-txt > requirements.txt`  <- creates/updates requirements.txt
 
+SERVICE PIPELINE (UPDATED)
+------------
+
 Import raw data
 ------------
 The raw data is not tracked by Github due to its size (added to .gitignore), so please import it once in your local repository:
 
-Import images
-> Upload the image data folder set directly on local from https://challengedata.ens.fr/participants/challenges/35/, you should save the folders image_train and image_test respecting the following structure
-
-    ├── data
-    │   └── raw           
-    |   |  ├── image_train 
-    |   |  ├── image_test 
-
 Import text data
-> `python data/import_raw_data.py`  <- imports raw data, execute from src folder (cd command to src folder)
+> `uv run python -m services.data_import.import_raw_data`  <- imports raw data, execute from src/data folder (cd command to src/data folder)
 
 Preprocessing
 ------------
-> `uv run python -m src.features.preprocessing_pipeline`  <- run preprocessing (due to path issues use uv run instead of just python)
+> `uv run python -m services.preprocess.text_preparation_pipeline`  <- run preprocessing , execute from src/data folder (cd command to src/data folder)
 
-> `uv run python -m src.models.train_model_text`    <- run training
+Training
+------------
+> `uv run python -m services.train_model_text`    <- run training, execute from src/train_model folder (cd command to src/train_model folder)
 
 Evaluation
 ------------
-> `uv run python -m src.models.evaluate_text --model_path ./models/bert-rakuten-final --dataset_path ./src/data/processed/test_dataset --output_dir ./src/data/results/evaluation`  <- run evaluation (confusion matrix + class report)
+> `uv run python -m services.evaluate_text`  <- run evaluation (confusion matrix + class report), execute from src/evaluate_model folder (cd command to src/evaluate_model folder)
 
-API
+Prediction
+------------
+> `uv run python -m services.predict_text --text "Pgytech Pour Dji Osmo Pocket 4pcs Nd8 Nd16 Nd32 Nd64 Professional Lens Filter @Doauhao3293-Générique; PGYTECH Pour DJI Osmo Pocket 4PCS ND8 Filtre ND64 ND16 nd32 Professional VERRES Caractéristiques: Parfait pour DJI OSMO caméra de poche (non inclus). Contrôlez toutes les situations avec la Cardan. Extrêmement léger châssis en aluminium aviation CNC. Imperméable à l&#39;eau l&#39;huile épreuve et anti-rayures revêtement durci. verre optique SCHOTT allemand pour répondre aux exigences rigoureuses des photographes professionnels. Nanomètre vide multicouche double face pour protéger votre objectif pour améliorer les effets de la clarté et de couleur. La technologie de revêtement multicouche avec de multiples processus de broyage et de polissage afin d&#39;assurer les exigences les plus élevées de la qualité d&#39;image haute définition. Conforme aux normes environnementales de l&#39;UE ROHS de limite à des substances nocives. Système magnétique installation facile et rapide. N&#39;affecter les performances de l&#39;appareil. Caractéristiques: Marque: PGYTECH Matériel:" --probabilities --top_k 3`  <- run prediction test, execute from src/predict folder (cd command to src/predict folder)
+
+> `uv run python -m services.predict_text --designation "Bloc skimmer PVC sans eclairage" --description "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 5`  <- run prediction test (designation + description), execute from src/predict folder (cd command to src/predict folder)
+
+
+API (`TO BE UPDATED`)
 ------------
 `uvicorn src.api.api:app --reload`   <- run API (stop with CTRL + C)
 

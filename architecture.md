@@ -7,8 +7,8 @@
 Rakuten_MLOps_Project
 ├── data
 │   ├── raw
-│   ├── processed
-│   └── ...
+│   ├── preprocessed
+│   └── test_samples      #json files with samples from holdout set
 ├── models
 │   ├── <model_1>
 │   └── <model_2>
@@ -17,30 +17,62 @@ Rakuten_MLOps_Project
 │   │   ├── evaluation
 │   │   └── ... (maybe predictions, etc.)
 │   └── <model_2>
+├── config
+│   ├── paths.yaml
+│   └── params.yaml
 ├── deployments
 │   ├── nginx
 │   │   └── nginx.conf
 │   └── ... (more services)
 ├── src
 │   ├── data
-│   │   ├── import_raw.py
-│   │   ├── preprocess.py
+│   │   ├── __init__.py
 │   │   ├── api.py
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   ├── services
+│   │   │   ├── __init__.py
+│   │   │   ├── data_import
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── import_raw_data.py
+│   │   │   └── preprocess
+│   │   │       ├── __init__.py
+│   │   │       ├── text_cleaning.py
+│   │   │       ├── text_outliers.py
+│   │   │       └── text_preparation_pipeline.py
 │   │   ├── Dockerfile
 │   │   └── pyproject.toml
 │   ├── train_model
-│   │   ├── train_model.py
 │   │   ├── api.py
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   ├── services
+│   │   │   ├── __init__.py
+│   │   │   └── train_model_text.py
 │   │   ├── Dockerfile
 │   │   └── pyproject.toml
 │   ├── evaluate_model
-│   │   ├── evaluate_model.py
 │   │   ├── api.py
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   ├── services
+│   │   │   ├── __init__.py
+│   │   │   └── evaluate_text.py
 │   │   ├── Dockerfile
 │   │   └── pyproject.toml
 │   ├── predict
-│   │   ├── predict.py
 │   │   ├── api.py
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   ├── services
+│   │   │   ├── __init__.py
+│   │   │   ├── text_cleaning.py
+│   │   │   ├── text_outliers.py
+│   │   │   └── text_preparation_predict.py
 │   │   ├── Dockerfile
 │   │   └── pyproject.toml
 │   └── ... (more services)
@@ -59,3 +91,4 @@ uv.lock
 .gitignore
 ```
 generated with [ASCII Text Tree Generator](https://www.text-tree-generator.com/)
+
