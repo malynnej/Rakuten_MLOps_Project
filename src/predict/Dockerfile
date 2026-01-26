@@ -19,10 +19,9 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
-# copy application code
-COPY api.py src/predict/
-COPY predict_text.py src/predict/
+# copy full application code
+COPY . .
 
 # run API application
-CMD ["uvicorn", "src.predict.api:app", \
+CMD ["uvicorn", "api:app", \
      "--host", "0.0.0.0", "--port", "8000"]
