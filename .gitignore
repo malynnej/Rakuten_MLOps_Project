@@ -118,3 +118,4 @@ target/
 # OS junk
 .DS_Store
 __MACOSX/
+/results
