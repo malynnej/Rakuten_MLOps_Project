@@ -1,11 +1,13 @@
 # src/data/api.py
 """
-Data Service API
+Data Service API with Retraining Support
 
 Handles:
 1. Importing raw data from S3
-2. Preprocessing data for training (with label encoding, splitting, tokenization)
-3. Batch preprocessing from uploaded files
+2. Preprocessing data for training (with strategy selection)
+3. New class detection and handling
+4. Batch preprocessing from uploaded files
+5. Retraining workflows (full/hybrid strategies)
 """
 
 import os
@@ -16,16 +18,14 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import pandas as pd
+import traceback
 
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.data_import.import_raw_data import import_raw_data
-from services.preprocess.data_preparation import TrainingDataPipeline
+from services.preprocess.text_preparation_pipeline import TextPreparationPipeline
 from core.config import load_config, get_path
 
 app = FastAPI(title="Rakuten ML Data Service API")
-
 
 # ============================================
 # GLOBAL STATE
@@ -39,30 +39,33 @@ processing_status = {
     "is_processing": False,
     "status": "idle",
     "last_processing": None,
-    "results": None
+    "results": None,
+    "error_details": None,
+    "progress": 0
 }
-
 
 @app.on_event("startup")
 async def startup():
     """Initialize pipeline at startup"""
     global pipeline
     try:
-        pipeline = TrainingDataPipeline()
-        print(" Data pipeline initialized at startup")
+        pipeline = TextPreparationPipeline()
+        print("✓ Data pipeline initialized at startup")
     except Exception as e:
-        print(f" Failed to initialize pipeline: {e}")
+        print(f"✗ Failed to initialize pipeline: {e}")
         pipeline = None
-
 
 # ============================================
 # REQUEST MODELS
 # ============================================
 
 class PreprocessRequest(BaseModel):
-    retrain: bool = False
+    combine_existing_data: bool = False
     save_holdout: bool = True
 
+class BatchPreprocessRequest(BaseModel):
+    combine_existing_data: bool = False
+    save_holdout: bool = True
 
 # ============================================
 # RAW DATA IMPORT ENDPOINTS
@@ -84,15 +87,28 @@ async def import_raw_endpoint(background_tasks: BackgroundTasks):
             print("IMPORTING RAW DATA FROM S3")
             print(f"{'='*60}\n")
             
-            # Import data
-            import_raw_data()
-            
+            # Get config
+            paths = load_config("paths")
             raw_dir = get_path("data.raw")
-            print(f"\n Raw data imported successfully!")
+            bucket_url = paths["data"]["bucket_raw"]
+            filenames = [
+                paths["data"]["X_train_raw"],
+                paths["data"]["y_train_raw"]
+            ]
+            
+            print(f"Bucket: {bucket_url}")
+            print(f"Files: {filenames}")
+            print(f"Destination: {raw_dir}\n")
+            
+            # Import data
+            import_raw_data(raw_dir, filenames, bucket_url)
+            
+            print(f"\n✓ Raw data imported successfully!")
             print(f"   Location: {raw_dir}")
             
         except Exception as e:
-            print(f" Import failed: {e}")
+            print(f"✗ Import failed: {e}")
+            traceback.print_exc()
     
     # Start background task
     background_tasks.add_task(import_job)
@@ -102,7 +118,6 @@ async def import_raw_endpoint(background_tasks: BackgroundTasks):
         "message": "Raw data import job submitted. Check logs for progress.",
         "timestamp": datetime.now().isoformat()
     }
-
 
 @app.get("/import/status")
 async def import_status():
@@ -135,6 +150,91 @@ async def import_status():
         "timestamp": datetime.now().isoformat()
     }
 
+# ============================================
+# NEW CLASS DETECTION
+# ============================================
+
+@app.post("/preprocess/check-new-classes")
+async def check_new_classes(file: UploadFile = File(...)):
+    """
+    Check if uploaded data contains new product classes.
+    
+    Use this before preprocessing to determine:
+    - If label encoder must be re-fitted due to new classes
+    
+    Example:
+        POST /preprocess/check-new-classes
+        - Upload CSV file with 'prdtypecode' column
+    
+    Returns:
+        Information about new classes and recommendations
+    """
+    global pipeline
+    
+    if pipeline is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Pipeline not initialized"
+        )
+    
+    try:
+        # Read file
+        df = pd.read_csv(file.file)
+        
+        if "prdtypecode" not in df.columns:
+            raise HTTPException(
+                status_code=400,
+                detail="CSV must contain 'prdtypecode' column"
+            )
+        
+        # Check if label encoder exists
+        models_dir = get_path("models.save_dir")
+        encoder_path = models_dir / "label_encoder.pkl"
+        
+        if not encoder_path.exists():
+            return {
+                "has_existing_encoder": False,
+                "has_new_classes": False,
+                "message": "No existing label encoder found - this will be initial training",
+                "recommendation": {
+                    "reason": "No existing model - initial training required"
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # USE THE PIPELINE'S METHOD
+        has_new_classes, new_classes_info = pipeline._detect_new_classes(
+            df  
+        )
+        
+        # Generate recommendation based on results
+        if has_new_classes:
+            recommendation = {
+                "reason": "New classes detected - label encoder must be re-fitted and model retrained from scratch"
+            }
+        else:
+            recommendation = {
+                "reason": "No new classes - safe to fine-tune existing model with new data"
+            }
+        
+        return {
+            "has_existing_encoder": True,
+            "has_new_classes": has_new_classes,
+            "details": new_classes_info,
+            "recommendation": recommendation,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+        )
 
 # ============================================
 # PREPROCESSING ENDPOINTS
@@ -148,19 +248,12 @@ async def preprocess_from_raw(
     """
     Preprocess data from raw CSV files in data/raw/.
     
-    This is the main endpoint for training data preparation:
-    - Loads raw X_train and y_train CSV files
-    - Combines text columns
-    - Cleans and preprocesses text
-    - Encodes labels
-    - Splits into train/val/test/holdout
-    - Tokenizes
-    - Saves as parquet files
+    Automatically detects and handles new classes.
     
     Example:
         POST /preprocess/from-raw
         {
-            "retrain": false,
+            "combine_existing_data": false,
             "save_holdout": true
         }
     """
@@ -175,7 +268,31 @@ async def preprocess_from_raw(
     if processing_status["is_processing"]:
         raise HTTPException(
             status_code=409,
-            detail="Preprocessing already in progress"
+            detail={
+                "error": "Preprocessing already in progress",
+                "current_status": processing_status["status"],
+                "started_at": processing_status["last_processing"]
+            }
+        )
+    
+    
+    # Validate prerequisites
+    raw_dir = get_path("data.raw")
+    paths = load_config("paths")
+    X_train_path = raw_dir / paths["data"]["X_train_raw"]
+    y_train_path = raw_dir / paths["data"]["y_train_raw"]
+    
+    if not (X_train_path.exists() and y_train_path.exists()):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Raw data files not found",
+                "missing_files": {
+                    "X_train": str(X_train_path),
+                    "y_train": str(y_train_path)
+                },
+                "suggestion": "Run data import first: POST /import/raw"
+            }
         )
     
     def preprocessing_job():
@@ -186,79 +303,109 @@ async def preprocess_from_raw(
             processing_status["is_processing"] = True
             processing_status["status"] = "processing"
             processing_status["last_processing"] = datetime.now().isoformat()
+            processing_status["error_details"] = None
+            processing_status["progress"] = 0
             
             print(f"\n{'='*60}")
             print("BACKGROUND PREPROCESSING STARTED")
+            print(f"{'='*60}")
+            print(f"Combine existing data: {request.combine_existing_data}")
+            print(f"Save holdout: {request.save_holdout}")
             print(f"{'='*60}\n")
             
             # Load raw data
-            raw_dir = get_path("data.raw")
-            paths = load_config("paths")
-            
-            X_train = pd.read_csv(raw_dir / paths["data"]["X_train_raw"], index_col=0)
-            y_train = pd.read_csv(raw_dir / paths["data"]["y_train_raw"], index_col=0)
+            X_train = pd.read_csv(X_train_path, index_col=0)
+            y_train = pd.read_csv(y_train_path, index_col=0)
             
             # Combine
             df = X_train.join(y_train)
-            
             print(f"Loaded {len(df):,} samples from raw data")
             
-            # Preprocess
+            processing_status["progress"] = 10
+            
+            # Preprocess with strategy
             output_paths = pipeline.prepare_training_data(
                 df,
-                retrain=request.retrain,
+                combine_existing_data=request.combine_existing_data,
                 save_holdout=request.save_holdout
             )
+            
+            processing_status["progress"] = 90
             
             # Update status with success
             processing_status["is_processing"] = False
             processing_status["status"] = "completed"
+            processing_status["progress"] = 100
             processing_status["results"] = output_paths
             
-            print(f"\n Background preprocessing completed!")
+            print(f"\n✓ Background preprocessing completed!")
             print(f"   Train: {output_paths['num_train']:,} samples")
             print(f"   Val:   {output_paths['num_val']:,} samples")
             print(f"   Test:  {output_paths['num_test']:,} samples")
             
+            if output_paths.get("has_new_classes"):
+                print(f" New classes detected and handled")
+            
         except FileNotFoundError as e:
             processing_status["is_processing"] = False
-            processing_status["status"] = f"failed: Raw data files not found. Run /import/raw first."
+            processing_status["status"] = "failed"
+            processing_status["progress"] = 0
             processing_status["results"] = None
-            print(f" Preprocessing failed: {e}")
+            processing_status["error_details"] = {
+                "error_type": "FileNotFoundError",
+                "message": str(e),
+                "suggestion": "Run /import/raw first"
+            }
+            print(f"✗ Preprocessing failed: {e}")
             
         except Exception as e:
             processing_status["is_processing"] = False
-            processing_status["status"] = f"failed: {str(e)}"
+            processing_status["status"] = "failed"
+            processing_status["progress"] = 0
             processing_status["results"] = None
-            print(f" Preprocessing failed: {e}")
+            processing_status["error_details"] = {
+                "error_type": type(e).__name__,
+                "message": str(e),
+                "traceback": traceback.format_exc()
+            }
+            print(f"✗ Preprocessing failed: {e}")
+            traceback.print_exc()
     
     # Start background task
     background_tasks.add_task(preprocessing_job)
     
     return {
         "status": "preprocessing_started",
-        "message": "Preprocessing job submitted. Check /status for progress.",
-        "retrain": request.retrain,
-        "save_holdout": request.save_holdout,
-        "timestamp": datetime.now().isoformat()
+        "message": "Preprocessing job submitted. Monitor progress at /status",
+        "config": {
+            "combine_existing_data": request.combine_existing_data,
+            "save_holdout": request.save_holdout
+        },
+        "timestamp": datetime.now().isoformat(),
+        "endpoints": {
+            "status": "/status",
+            "results": "/results/latest"
+        }
     }
-
 
 @app.post("/preprocess/batch")
 async def preprocess_batch(
     file: UploadFile = File(...),
-    retrain: bool = False,
-    save_holdout: bool = True
+    combine_existing_data: bool = False,
+    save_holdout: bool = False
 ):
     """
-    Preprocess uploaded CSV file.
+    Preprocess uploaded CSV file with retraining support.
     
-    Useful for custom datasets or testing.
+    Use cases:
+    - Upload new product data for retraining
+    - Test preprocessing on custom dataset
+    - Simulate new data arrival
     
     Example:
         POST /preprocess/batch
         - Upload CSV file with columns: designation, description, prdtypecode
-        - Form data: retrain=false, save_holdout=true
+        - Form data: combine_existing_data= False (default), save_holdout = False (default)
     """
     global pipeline
     
@@ -276,14 +423,18 @@ async def preprocess_batch(
                 detail="Only CSV files are supported"
             )
         
+        
         # Read uploaded file
         df = pd.read_csv(file.file, index_col=0)
         
         print(f"\n{'='*60}")
         print(f"PROCESSING UPLOADED FILE: {file.filename}")
-        print(f"{'='*60}\n")
+        print(f"{'='*60}")
         print(f"Rows: {len(df):,}")
         print(f"Columns: {list(df.columns)}")
+        print(f"Combine with existing data: {combine_existing_data}")
+        print(f"Save holdout: {save_holdout}")
+        print(f"{'='*60}\n")
         
         # Validate required columns
         required_cols = ["designation", "description", "prdtypecode"]
@@ -294,10 +445,10 @@ async def preprocess_batch(
                 detail=f"Missing required columns: {missing_cols}"
             )
         
-        # Preprocess
+        # Preprocess with strategy
         output_paths = pipeline.prepare_training_data(
             df,
-            retrain=retrain,
+            combine_existing_data= combine_existing_data,
             save_holdout=save_holdout
         )
         
@@ -305,6 +456,10 @@ async def preprocess_batch(
             "status": "success",
             "message": "Batch preprocessing complete",
             "input_file": file.filename,
+            "config": {
+                "combine_existing_data": combine_existing_data,
+                "save_holdout": save_holdout
+            },
             "output_paths": output_paths,
             "timestamp": datetime.now().isoformat()
         }
@@ -312,26 +467,30 @@ async def preprocess_batch(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+        )
 
 # ============================================
 # STATUS & INFO ENDPOINTS
 # ============================================
 
-@app.get("/status")
+@app.get("/preprocessing/status")
 async def get_status():
     """
-    Get current preprocessing status.
+    Get current preprocessing status with detailed progress.
     
     Returns:
-        Current processing status and results if completed
+        Current processing status, progress, and results if completed
     """
     return {
         "processing_status": processing_status,
         "timestamp": datetime.now().isoformat()
     }
-
 
 @app.get("/health")
 async def health_check():
@@ -349,7 +508,6 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
-
 @app.get("/results/latest")
 async def get_latest_results():
     """
@@ -361,7 +519,7 @@ async def get_latest_results():
     if processing_status["results"] is None:
         raise HTTPException(
             status_code=404,
-            detail="No preprocessing results available"
+            detail="No preprocessing results available. Run preprocessing first."
         )
     
     return {
@@ -370,8 +528,7 @@ async def get_latest_results():
         "timestamp": processing_status["last_processing"]
     }
 
-
-@app.get("/data/info")
+@app.get("/data_info")
 async def data_info():
     """
     Get information about processed data files.
@@ -381,7 +538,7 @@ async def data_info():
     """
     preprocessed_dir = get_path("data.preprocessed")
     
-    files = ["train.parquet", "val.parquet", "test.parquet", "holdout.parquet"]
+    files = ["train.parquet", "val.parquet", "test.parquet", "holdout_raw.parquet"]
     file_info = {}
     
     for filename in files:
@@ -406,6 +563,52 @@ async def data_info():
         "timestamp": datetime.now().isoformat()
     }
 
+@app.get("/prerequisites")
+async def check_prerequisites():
+    """
+    Check if all prerequisites for preprocessing are met.
+    
+    Returns:
+        Status of required files and configuration
+    """
+    raw_dir = get_path("data.raw")
+    preprocessed_dir = get_path("data.preprocessed")
+    models_dir = get_path("models.save_dir")
+    paths = load_config("paths")
+    
+    checks = {
+        "raw_data": {
+            "X_train": (raw_dir / paths["data"]["X_train_raw"]).exists(),
+            "y_train": (raw_dir / paths["data"]["y_train_raw"]).exists()
+        },
+        "preprocessed_data": {
+            "train": (preprocessed_dir / "train.parquet").exists(),
+            "val": (preprocessed_dir / "val.parquet").exists(),
+            "test": (preprocessed_dir / "test.parquet").exists(),
+            "holdout": (preprocessed_dir / "holdout_raw.parquet").exists()
+        },
+        "label_encoder": {
+            "encoder": (models_dir / "label_encoder.pkl").exists(),
+            "mappings": (models_dir / "label_mappings.json").exists()
+        }
+    }
+    
+    raw_ready = all(checks["raw_data"].values())
+    preprocessed_ready = all(checks["preprocessed_data"].values())
+    encoder_ready = all(checks["label_encoder"].values())
+    
+    return {
+        "ready_for_initial_preprocessing": raw_ready,
+        "ready_for_retraining": raw_ready and encoder_ready and preprocessed_ready,
+        "has_preprocessed_data": preprocessed_ready,
+        "has_label_encoder": encoder_ready,
+        "checks": checks,
+        "recommendations": {
+            "initial_training": "POST /preprocess/from-raw with retrain=false" if raw_ready else "POST /import/raw first",
+            "retraining": "POST /preprocess/from-raw with retrain=true" if (raw_ready and preprocessed_ready) else "Complete initial training first"
+        },
+        "timestamp": datetime.now().isoformat()
+    }
 
 # ============================================
 # ROOT ENDPOINT
@@ -416,21 +619,36 @@ async def root():
     """API root with usage information"""
     return {
         "service": "Rakuten ML Data Service API",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "description": "Data preprocessing",
+        "features": [
+            "Raw data import from S3",
+            "Intelligent preprocessing pipeline",
+            "New class detection",
+            "Combine new with old data",
+            "Holdout set management"
+        ],
         "endpoints": {
-            "import": "POST /import/raw - Import raw data from S3",
-            "import_status": "GET /import/status - Check raw data files",
-            "preprocess_raw": "POST /preprocess/from-raw - Preprocess raw data",
-            "preprocess_batch": "POST /preprocess/batch - Preprocess uploaded file",
-            "status": "GET /status - Get preprocessing status",
-            "health": "GET /health - Health check",
-            "latest_results": "GET /results/latest - Latest preprocessing results",
-            "data_info": "GET /data/info - Processed data information"
+            "import": {
+                "import_raw": "POST /import/raw - Import raw data from S3",
+                "import_status": "GET /import/status - Check raw data files"
+            },
+            "preprocessing": {
+                "from_raw": "POST /preprocess/from-raw - Preprocess raw data",
+                "batch": "POST /preprocess/batch - Preprocess uploaded file",
+                "check_new_classes": "POST /preprocess/check-new-classes - Detect new classes"
+            },
+            "status": {
+                "status": "GET /status - Get preprocessing status",
+                "health": "GET /health - Health check",
+                "prerequisites": "GET /prerequisites - Check readiness",
+                "latest_results": "GET /results/latest - Latest preprocessing results",
+                "data_info": "GET /data/info - Processed data information"
+            }
         },
         "docs": "/docs",
         "timestamp": datetime.now().isoformat()
     }
-
 
 # ============================================
 # RUN SERVER

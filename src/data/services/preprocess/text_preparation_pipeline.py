@@ -1,3 +1,15 @@
+"""
+Text Preparation Pipeline with Retraining Support
+
+Initial Training:
+1. Only use provided raw data (no old preprocessed data) - initial training
+
+Handles 3 retraining cases:
+1. Periodic new data (combine old preprocessed data + new raw data) - retraining with fine-tuning only
+2. New classes detection (with periodic approach) - initial training needed (re-fit of label encoder)
+3. Parameter changes (trigger retraining)
+"""
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -7,24 +19,25 @@ from transformers import AutoTokenizer
 import pickle
 import json
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import Optional, Tuple, Dict, Set
 
 from services.preprocess.text_cleaning import TextCleaning
 from services.preprocess.text_outliers import TransformTextOutliers
 from core.config import load_config, get_path
 
+
 class TextPreparationPipeline:
     """
-    Unified preprocessing pipeline with:
+    Unified preprocessing pipeline with retraining support.
+    
+    Features:
     - Text cleaning (HTML removal, encoding fixes)
     - Outlier transformation (redundant text removal, summarization)
-    - Label encoding (categorical → integers for BERT)
+    - Label encoding with new class detection
     - Data splitting (train/val/test/holdout)
-    - Tokenization (BERT tokenizer with padding/truncation)
-    - Saving as parquet files
-    
-    Handles:
-    - Batch processing (files for training)
+    - Tokenization (BERT tokenizer)
+    - Combining new and old preprocessed data
     """
     def __init__(self):
         """
@@ -61,107 +74,56 @@ class TextPreparationPipeline:
         
         print("PreprocessingPipeline initialized successfully!")
 
-    def preprocess_batch(self, df: pd.DataFrame, retrain: bool = False, save_holdout: bool = True) -> dict:
+    # ============================================
+    # MAIN ENTRY POINTS
+    # ============================================
+    
+    def prepare_training_data(
+        self, 
+        df: pd.DataFrame, 
+        combine_existing_data: bool = False, 
+        save_holdout: bool = True,
+    ) -> dict:
         """
-        Process entire dataframe for training.
+        Main entry point for preparing training data.
         
-        Steps:
-        1. Combine designation + description columns
-        2. Split data EARLY (holdout gets raw data)
-        3. Clean text (HTML, encoding) - ONLY on train/val/test
-        4. Transform outliers - ONLY on train/val/test
-        5. Encode labels (categories → integers)
-        6. Tokenize train/val/test
-        7. Save as parquet files
-        
-        Holdout set receives:
-        - Combined text (designation + description)
-        - Original raw text (no cleaning/transformation)
-        - Labels (for evaluation)
-        - NOT tokenized (done at prediction time)
-        
-        Input:
-            df (pd.DataFrame): Raw data with columns:
-                - designation: Product title
-                - description: Product description
-                - prdtypecode: Category ID
-            retrain (bool): If True, loads existing label encoder
-            save_holdout (bool): If True, saves holdout set for future retraining
+        Args:
+            df: Raw dataframe with designation, description, prdtypecode
+            combine_existing_data: If True, combines new raw data with preprocessed data
+            save_holdout: If True, saves holdout set
         
         Returns:
-            dict: {
-                "train": path to train.parquet,
-                "val": path to val.parquet,
-                "test": path to test.parquet,
-                "holdout": path to holdout.parquet (if save_holdout=True),
-                "num_train": int,
-                "num_val": int,
-                "num_test": int,
-                "num_holdout": int (if save_holdout=True),
-                "label_encoder_path": str,
-                "num_labels": int
-            }
+            dict with paths and metadata
         """
         t_start = time.time()
         
         print("=" * 60)
-        print("BATCH PREPROCESSING PIPELINE")
+        print("TEXT PREPARATION PIPELINE")
         print("=" * 60)
-        print(f"Retrain mode: {retrain}")
+        print(f"Mode: {'Combine with preprocessed data' if combine_existing_data else 'only new raw data'}")
+        print(f"Input data: {len(df):,} samples")
         print(f"Save holdout: {save_holdout}")
-        print(f"Input data shape: {df.shape}")
         
-        # 1. Combine text columns (designation + description)
-        print("\n>>> Step 1: Combining text columns")
-        df = self._combine_text_columns(df)
+        # Detect new classes
+        has_new_classes, new_classes_info = self._detect_new_classes(df)
         
-        # 2. EARLY SPLIT: Separate holdout BEFORE preprocessing
-        print("\n>>> Step 2: Splitting data (holdout gets raw data)")
-        if save_holdout:
-            main_df, holdout_df = self._split_holdout_early(df)
-        else:
-            main_df = df
-            holdout_df = None
+        if has_new_classes:
+            print(f"\n  NEW CLASSES DETECTED!")
+            print(f"   New classes: {new_classes_info['new_classes']}")
+            print(f"   -> Re-fit label encoder")
         
-        # 3. Text cleaning (HTML → plain text, fix encoding) - ONLY main data
-        print("\n>>> Step 3: Text cleaning (train/val/test only)")
-        main_df, _ = self.text_cleaner.cleanTxt(main_df, ["text"])
+        # Standard preprocessing pipeline
+        output_paths = self._preprocess_pipeline(
+            df, 
+            combine_existing_data=combine_existing_data,
+            save_holdout=save_holdout,
+            has_new_classes=has_new_classes
+        )
         
-        # Handle empty texts
-        main_df["text"] = main_df["text"].apply(lambda x: x if (x and x.strip() != "") else "[EMPTY]")
-        
-        # 4. Text outlier transformation - ONLY main data
-        if self.preproc_config["preprocessing"].get("transform_outliers", True):
-            print("\n>>> Step 4: Text outlier transformation (train/val/test only)")
-            main_df, _, _ = self.outlier_transformer.transform_outliers(main_df)
-        else:
-            print("\n>>> Step 4: Skipping outlier transformation (disabled in config)")
-        
-        # 5. Label encoding (prdtypecode → integer labels)
-        print("\n>>> Step 5: Label encoding")
-        main_df, label_encoder_path, num_labels = self._encode_labels(main_df, retrain)
-        
-        # Also encode holdout labels (but don't preprocess the text)
-        if holdout_df is not None:
-            holdout_df["labels"] = self.label_encoder.transform(holdout_df["prdtypecode"].values)
-        
-        # 6. Split main data into train/val/test
-        print("\n>>> Step 6: Splitting train/val/test")
-        train_df, val_df, test_df = self._split_data(main_df)
-        
-        # 7. Tokenization (BERT tokenizer) - ONLY train/val/test
-        print("\n>>> Step 7: Tokenizing train/val/test (holdout stays raw)")
-        train_df = self._tokenize_dataframe(train_df)
-        val_df = self._tokenize_dataframe(val_df)
-        test_df = self._tokenize_dataframe(test_df)
-        
-        # 8. Save as parquet files
-        print("\n>>> Step 8: Saving preprocessed data")
-        output_paths = self._save_splits(train_df, val_df, test_df, holdout_df)
-        
-        # Add metadata to output
-        output_paths["label_encoder_path"] = str(label_encoder_path)
-        output_paths["num_labels"] = num_labels
+        # Add metadata
+        output_paths["has_new_classes"] = has_new_classes
+        if has_new_classes:
+            output_paths["new_classes_info"] = new_classes_info
         
         t_end = time.time()
         t_exec = str(timedelta(seconds=t_end - t_start))
@@ -170,35 +132,186 @@ class TextPreparationPipeline:
         print("PREPROCESSING COMPLETE!")
         print("=" * 60)
         print(f"Execution time: {t_exec}")
+        if has_new_classes:
+            print(f"New classes detected - label encoder re-fitted")
+        
+        return output_paths
+    
+    
+    # ============================================
+    # NEW CLASSES DETECTION
+    # ============================================
+    
+    def _detect_new_classes(self, df: pd.DataFrame) -> Tuple[bool, Dict]:
+        """
+        Detect if new product classes exist in the data.
+        
+        Returns:
+            (has_new_classes, info_dict)
+            - has_new_classes: True if new classes found
+            - info_dict: Details about new/existing classes
+        """
+        print(f"\n>>> Checking for new classes")
+        
+        models_dir = get_path("models.save_dir")
+        encoder_path = models_dir / "label_encoder.pkl"
+        
+        if not encoder_path.exists():
+            print("  No existing label encoder found, create label encoder")
+            return True, {}
+        
+        # Load existing encoder
+        with open(encoder_path, "rb") as f:
+            existing_encoder = pickle.load(f)
+        
+        existing_classes = set(existing_encoder.classes_)
+        new_data_classes = set(df['prdtypecode'].unique())
+        
+        # Find new classes
+        unseen_classes = new_data_classes - existing_classes
+        
+        info = {
+            "existing_classes": sorted(existing_classes),
+            "new_data_classes": sorted(new_data_classes),
+            "new_classes": sorted(unseen_classes),
+            "num_existing": len(existing_classes),
+            "num_new": len(unseen_classes),
+            "num_total": len(existing_classes | new_data_classes)
+        }
+        
+        if unseen_classes:
+            print(f"  NEW CLASSES DETECTED:")
+            print(f"     New classes: {sorted(unseen_classes)}")
+            print(f"     Existing:    {len(existing_classes)} classes")
+            print(f"     Total now:   {info['num_total']} classes")
+            print(f"  Label encoder must be re-fitted")
+            print(f"  Model must be retrained from scratch")
+            return True, info
+        
+        print(f"  No new classes - all {len(existing_classes)} classes already known")
+        return False, info
+    
+    def _preprocess_pipeline(
+        self,
+        df_new: pd.DataFrame,
+        combine_existing_data: bool,
+        save_holdout: bool,
+        has_new_classes: bool = False
+    ) -> dict:
+        """
+        Core preprocessing pipeline.
+        
+        Steps:
+        1. Combine text columns (if not already done)
+        2. Label encoding
+        3. Early Holdout Split
+        4. Clean text (HTML, encoding)
+        5. Transform outliers
+        6. Split new data (train, test, val) and combine with old data if defined
+        7. Tokenize
+        8. Save parquet files
+        """
+        print("\n" + "=" * 60)
+        print("PREPROCESSING PIPELINE")
+        print("=" * 60)
+        print(f"Combining mode: {combine_existing_data}")
+        print(f"New classes: {has_new_classes}")
+        print(f"Save holdout: {save_holdout}")
+        print(f"Input data shape: {df_new.shape}")
+        
+        # Step 1: Combine text columns if not already done
+        if "text" not in df_new.columns:
+            print("\n>>> Step 1: Combining text columns")
+            df_new = self._combine_text_columns(df_new)
+        else:
+            print("\n>>> Step 1: Text column already exists, skipping combination")
+        
+        # Step 2: Label encoding 
+        print("\n>>>  Step2: Label encoding")
+        df_new, label_encoder_path, num_labels = self._handle_label_encoding(
+            df_new, 
+            combine_existing_data, 
+            has_new_classes
+        )
+        
+        # Step 3: EARLY SPLIT: Separate holdout BEFORE preprocessing for new data
+        print("\n>>> Step 3: Splitting holdout (holdout gets raw data)")
+        if save_holdout:
+            main_df_new, holdout_df_new = self._split_holdout_early(df_new)
+        else:
+            main_df_new = df_new
+            holdout_df_new = None
+        
+        # Step 4: Text cleaning (HTML -> plain text, fix encoding)
+        print("\n>>> Step 4: Text cleaning (train/val/test only)")
+        main_df_new, _ = self.text_cleaner.cleanTxt(main_df_new, ["text"])
+        
+        # Handle empty texts
+        main_df_new["text"] = main_df_new["text"].apply(
+            lambda x: x if (x and x.strip() != "") else "[EMPTY]"
+        )
+        
+        # Step 5: Text outlier transformation
+        if self.preproc_config["preprocessing"].get("transform_outliers", True):
+            print("\n>>> Step 5: Text outlier transformation (train/val/test only)")
+            main_df_new, _, _ = self.outlier_transformer.transform_outliers(main_df_new)
+        else:
+            print("\n>>> Step 5: Skipping outlier transformation (disabled in config)")
+        
+        # Step 6: Split and combine strategy
+        print("\n>>> Step 7: Splitting and combining train/val/test")
+        train_df, val_df, test_df, holdout_df = self._split_and_combine_data(
+            main_df_new, 
+            holdout_df_new,
+            combine_existing_data,
+            has_new_classes
+        )
+        
+        # Step 7: Tokenization (BERT tokenizer)
+        print("\n>>> Step 8: Tokenizing train/val/test (holdout stays raw)")
+        train_df = self._tokenize_dataframe(train_df)
+        val_df = self._tokenize_dataframe(val_df)
+        test_df = self._tokenize_dataframe(test_df)
+        
+        # Step 8: Save as parquet files
+        print("\n>>> Step 9: Saving preprocessed data")
+        output_paths = self._save_splits(train_df, val_df, test_df, holdout_df)
+        
+        # Add metadata to output
+        output_paths["label_encoder_path"] = str(label_encoder_path)
+        output_paths["num_labels"] = num_labels
+        
+        print("\n" + "=" * 60)
+        print("PREPROCESSING COMPLETE!")
+        print("=" * 60)
         print(f"Label encoder: {label_encoder_path}")
         print(f"Number of classes: {num_labels}")
         print(f"Output directory: {get_path('data.preprocessed')}")
         
         if holdout_df is not None:
-            print("\n📦 Holdout set saved with RAW text (not preprocessed)")
-            print("   → Use for realistic prediction/retraining simulation")
+            print("\n Holdout set saved with RAW text (not preprocessed)")
+            print("    Use for realistic prediction/retraining simulation")
         
         return output_paths
-
     
-    def _encode_labels(self, df: pd.DataFrame, retrain: bool) -> tuple:
+    def _handle_label_encoding(
+        self,
+        df_new: pd.DataFrame,
+        combine_existing_data: bool,
+        has_new_classes: bool
+    ) -> Tuple[pd.DataFrame, Path, int]:
         """
-        Encode categorical labels (prdtypecode) to integers.
+        Handle all label encoding logic in one place.
         
-        For initial training:
-        - Creates new LabelEncoder
-        - Fits on all categories
-        - Saves encoder and mappings to disk
-        
-        For retraining:
-        - Loads existing LabelEncoder
-        - Transforms using existing mappings
-        - Raises error if new categories appear
+        Three scenarios:
+        1. Initial training: Fit new encoder on new data
+        2. Retraining, no new classes: Load existing encoder, encode new data
+        3. Retraining, new classes: Re-fit encoder on old+new prdtypecode
         
         Returns:
-            df (pd.DataFrame): DataFrame with 'labels' column added
-            encoder_path (Path): Path to saved label encoder
-            num_labels (int): Number of unique classes
+            df_new: DataFrame with 'labels' column added
+            encoder_path: Path to label encoder file
+            num_labels: Number of classes
         """
         models_dir = get_path("models.save_dir")
         models_dir.mkdir(parents=True, exist_ok=True)
@@ -206,73 +319,119 @@ class TextPreparationPipeline:
         encoder_path = models_dir / "label_encoder.pkl"
         mapping_path = models_dir / "label_mappings.json"
         
-        if retrain:
-            # RETRAINING: Load existing encoder
+        # Scenario 1: Initial training
+        if not combine_existing_data:
+            print("  Initial training: Fitting new encoder on new data")
+            
+            self.label_encoder = LabelEncoder()
+            df_new["labels"] = self.label_encoder.fit_transform(
+                df_new["prdtypecode"].values
+            )
+            
+            print(f"    Classes: {len(self.label_encoder.classes_)}")
+            
+            # Save encoder
+            with open(encoder_path, "wb") as f:
+                pickle.dump(self.label_encoder, f)
+            
+            # Save mappings
+            self._save_label_mappings(mapping_path)
+        
+        # Scenario 2: Retraining, no new classes
+        elif combine_existing_data and not has_new_classes:
+            print("  Retraining (no new classes): Loading existing encoder")
+            
             if not encoder_path.exists():
                 raise FileNotFoundError(
                     f"Label encoder not found at {encoder_path}. "
-                    f"Cannot retrain without existing encoder!"
+                    f"Run initial training first!"
                 )
             
+            # Load existing encoder
             with open(encoder_path, "rb") as f:
                 self.label_encoder = pickle.load(f)
             
-            print(f"Loaded existing label encoder")
-            print(f"  Classes: {len(self.label_encoder.classes_)}")
-            print(f"  Categories: {sorted(self.label_encoder.classes_)[:10]}...")
+            print(f"    Classes: {len(self.label_encoder.classes_)}")
             
-            # Transform with existing encoder
-            try:
-                df["labels"] = self.label_encoder.transform(df["prdtypecode"].values)
-            except ValueError as e:
-                unique_categories = df["prdtypecode"].unique()
-                unknown_categories = set(unique_categories) - set(self.label_encoder.classes_)
-                raise ValueError(
-                    f"New categories detected in data!\n"
-                    f"Unknown categories: {unknown_categories}\n"
-                    f"Existing encoder only supports: {set(self.label_encoder.classes_)}"
-                )
+            # Encode new data with existing encoder
+            df_new["labels"] = self.label_encoder.transform(
+                df_new["prdtypecode"].values
+            )
         
-        else:
-            # INITIAL TRAINING: Create new encoder
+        # Scenario 3: Retraining, new classes detected
+        elif combine_existing_data and has_new_classes:
+            print("  Retraining (new classes): Re-fitting encoder on ALL data")
+            
+            # Load old preprocessed data to get all prdtypecode values
+            preprocessed_dir = get_path("data.preprocessed")
+            train_old = pd.read_parquet(preprocessed_dir / "train.parquet")
+            val_old = pd.read_parquet(preprocessed_dir / "val.parquet")
+            test_old = pd.read_parquet(preprocessed_dir / "test.parquet")
+            holdout_old = pd.read_parquet(preprocessed_dir / "holdout_raw.parquet")
+            
+            # Get all old categories
+            old_categories = pd.concat([
+                train_old["prdtypecode"],
+                val_old["prdtypecode"],
+                test_old["prdtypecode"],
+                holdout_old["prdtypecode"]
+            ]).unique()
+            
+            # Get new categories
+            new_categories = df_new["prdtypecode"].unique()
+            
+            # Combine all categories
+            all_categories = np.unique(np.concatenate([old_categories, new_categories]))
+            
+            print(f"    Old classes: {len(old_categories)}")
+            print(f"    New data classes: {len(new_categories)}")
+            print(f"    Total classes: {len(all_categories)}")
+            
+            # Fit new encoder on all categories
             self.label_encoder = LabelEncoder()
-            df["labels"] = self.label_encoder.fit_transform(df["prdtypecode"].values)
+            self.label_encoder.fit(all_categories)
             
-            print(f"Created new label encoder")
-            print(f"  Classes: {len(self.label_encoder.classes_)}")
-            print(f"  Categories: {sorted(self.label_encoder.classes_)}")
+            # Encode new data
+            df_new["labels"] = self.label_encoder.transform(
+                df_new["prdtypecode"].values
+            )
             
-            # Save label encoder
+            # Save encoder
             with open(encoder_path, "wb") as f:
                 pickle.dump(self.label_encoder, f)
-            print(f"\nSaved label encoder to: {encoder_path}")
             
-            # Create and save label mappings (for BERT model config)
-            id2label = {i: str(cat_id) for i, cat_id in enumerate(self.label_encoder.classes_)}
-            label2id = {str(cat_id): i for i, cat_id in enumerate(self.label_encoder.classes_)}
+            # Save mappings
+            self._save_label_mappings(mapping_path)
             
-            mappings = {
-                "id2label": id2label,
-                "label2id": label2id,
-                "num_labels": len(self.label_encoder.classes_)
-            }
-            
-            with open(mapping_path, "w") as f:
-                json.dump(mappings, f, indent=2)
-            print(f"Saved label mappings to: {mapping_path}")
-            
-            # Print sample mappings
-            print("\n" + "-" * 40)
-            print("LABEL MAPPINGS (sample)")
-            print("-" * 40)
-            sample_items = list(id2label.items())[:5]
-            for idx, cat in sample_items:
-                print(f"  {idx} → Category {cat}")
-            print(f"  ... ({len(id2label) - 5} more)")
+            print(f"    Re-fitted encoder with {len(self.label_encoder.classes_)} classes")
+            print(f"    Old data will be re-encoded when loading splits")
         
         num_labels = len(self.label_encoder.classes_)
         
-        return df, encoder_path, num_labels
+        return df_new, encoder_path, num_labels
+
+
+    def _save_label_mappings(self, mapping_path: Path):
+        """Save label mappings to JSON file."""
+        id2label = {
+            i: str(cat_id) 
+            for i, cat_id in enumerate(self.label_encoder.classes_)
+        }
+        label2id = {
+            str(cat_id): i 
+            for i, cat_id in enumerate(self.label_encoder.classes_)
+        }
+        
+        mappings = {
+            "id2label": id2label,
+            "label2id": label2id,
+            "num_labels": len(self.label_encoder.classes_)
+        }
+        
+        with open(mapping_path, "w") as f:
+            json.dump(mappings, f, indent=2)
+        
+        print(f"    Saved mappings to: {mapping_path}")
     
     def _combine_text_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -300,7 +459,7 @@ class TextPreparationPipeline:
         # For equal rows, use only designation
         df.loc[mask_equal, "text"] = df.loc[mask_equal, "designation"]
         
-        print(f"  Combined designation + description → text column")
+        print(f"  Combined designation + description into text column")
         
         return df
     
@@ -320,15 +479,11 @@ class TextPreparationPipeline:
         holdout_size = self.preproc_config["preprocessing"].get("holdout_size", 0.10)
         random_state = self.preproc_config["preprocessing"].get("random_state", 42)
         
-        # Temporary label encoding just for stratification
-        temp_encoder = LabelEncoder()
-        temp_labels = temp_encoder.fit_transform(df["prdtypecode"].values)
-        
         main_df, holdout_df = train_test_split(
             df,
             test_size=holdout_size,
             random_state=random_state,
-            stratify=temp_labels
+            stratify=df["labels"]
         )
         
         print(f"  Main data: {len(main_df)} ({len(main_df)/len(df)*100:.1f}%) [will be preprocessed]")
@@ -336,27 +491,32 @@ class TextPreparationPipeline:
         
         return main_df, holdout_df
 
-    def _split_data(self, df: pd.DataFrame) -> tuple:
+    def _split_and_combine_data(
+        self, 
+        df: pd.DataFrame, 
+        holdout_df: pd.DataFrame,
+        combine_existing_data: bool,
+        has_new_classes: bool
+    ) -> tuple:
         """
-        Split data into train/val/test sets.
+        Split only NEW data, then combine with OLD splits (if combine_existing_data).
+        If new classes are detected, the old splits will be re-encoded.
         
-        Split strategy:
-        - Test: 15% (for final evaluation)
-        - Val: 15% of remaining (for validation during training)
-        - Train: remainder (~70%)
-        
-        Uses stratification on labels to maintain class balance.
-        Uses random_state=42 for reproducibility.
+        Args:
+            df: Preprocessed dataframe (new data, or combined but not yet split)
+            combine_existing_data: Whether to combine with existing splits
+            has_new_classes: If new classes were deteceted
         
         Returns:
-            (train_df, val_df, test_df)
+            (train_df, val_df, test_df, holdout_df)
         """
         test_size = self.preproc_config["preprocessing"].get("test_size", 0.15)
         val_size = self.preproc_config["preprocessing"].get("val_size", 0.15)
         random_state = self.preproc_config["preprocessing"].get("random_state", 42)
         
+        # Always split the current data (whether it's new-only or combined)
         # First split: (train+val) vs test
-        train_val_df, test_df = train_test_split(
+        train_val_df, test_df_new = train_test_split(
             df,
             test_size=test_size,
             random_state=random_state,
@@ -365,24 +525,81 @@ class TextPreparationPipeline:
         
         # Second split: train vs val
         val_ratio = val_size / (1 - test_size)
-        train_df, val_df = train_test_split(
+        train_df_new, val_df_new = train_test_split(
             train_val_df,
             test_size=val_ratio,
             random_state=random_state,
             stratify=train_val_df["labels"]
         )
         
-        print(f"  Train: {len(train_df)} ({len(train_df)/len(df)*100:.1f}%)")
-        print(f"  Val:   {len(val_df)} ({len(val_df)/len(df)*100:.1f}%)")
-        print(f"  Test:  {len(test_df)} ({len(test_df)/len(df)*100:.1f}%)")
+        print(f"  Split new data:")
+        print(f"    Train: {len(train_df_new)} ({len(train_df_new)/len(df)*100:.1f}%)")
+        print(f"    Val:   {len(val_df_new)} ({len(val_df_new)/len(df)*100:.1f}%)")
+        print(f"    Test:  {len(test_df_new)} ({len(test_df_new)/len(df)*100:.1f}%)")
         
-        return train_df, val_df, test_df
+        # If combining, load old splits and combine
+        if combine_existing_data:
+            preprocessed_dir = get_path("data.preprocessed")
+            train_file = preprocessed_dir / "train.parquet"
+            val_file = preprocessed_dir / "val.parquet"
+            test_file = preprocessed_dir / "test.parquet"
+            holdout_file = preprocessed_dir / "holdout_raw.parquet"
+            
+            if train_file.exists() and val_file.exists() and test_file.exists():
+                print(f"\n  Loading existing splits to combine:")
+                
+                # Load old splits (already preprocessed, but NOT tokenized yet)
+                train_df_old = pd.read_parquet(train_file)
+                val_df_old = pd.read_parquet(val_file)
+                test_df_old = pd.read_parquet(test_file)
+                holdout_df_old = pd.read_parquet(holdout_file)
+                
+                # Remove tokenization columns if they exist (will re-tokenize later)
+                for df_old in [train_df_old, val_df_old, test_df_old]:
+                    if "input_ids" in df_old.columns:
+                        df_old.drop(columns=["input_ids", "attention_mask"], inplace=True)
+
+                # Re-encode old data if new classes detected
+                if has_new_classes:
+                    print(f"  Re-encoding old data with new encoder")
+                    train_df_old["labels"] = self.label_encoder.transform(train_df_old["prdtypecode"])
+                    val_df_old["labels"] = self.label_encoder.transform(val_df_old["prdtypecode"])
+                    test_df_old["labels"] = self.label_encoder.transform(test_df_old["prdtypecode"])
+                    holdout_df_old["labels"] = self.label_encoder.transform(holdout_df_old["prdtypecode"])
+                
+                print(f"    Old train: {len(train_df_old)}")
+                print(f"    Old val:   {len(val_df_old)}")
+                print(f"    Old test:  {len(test_df_old)}")
+                
+                # Combine each split separately
+                train_df = pd.concat([train_df_old, train_df_new], ignore_index=True)
+                val_df = pd.concat([val_df_old, val_df_new], ignore_index=True)
+                test_df = pd.concat([test_df_old, test_df_new], ignore_index=True)
+                holdout_df = pd.concat([holdout_df_old, holdout_df], ignore_index=True)
+                
+                print(f"\n  Combined splits:")
+                print(f"    Train: {len(train_df)} (old: {len(train_df_old)}, new: {len(train_df_new)})")
+                print(f"    Val:   {len(val_df)} (old: {len(val_df_old)}, new: {len(val_df_new)})")
+                print(f"    Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})")
+            else:
+                print(f"\n  No existing splits found - using new splits only")
+                train_df = train_df_new
+                val_df = val_df_new
+                test_df = test_df_new
+                holdout_df = holdout_df
+        else:
+            train_df = train_df_new
+            val_df = val_df_new
+            test_df = test_df_new
+            holdout_df = holdout_df
+        
+        return train_df, val_df, test_df, holdout_df
     
     def _tokenize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Tokenize all texts in dataframe using BERT tokenizer.
         
-        Tokenization settings (same as training!):
+        Tokenization settings (same as training):
         - max_length: from config (default 128)
         - padding: "max_length" (all sequences same length)
         - truncation: True (cut long texts)
@@ -413,8 +630,13 @@ class TextPreparationPipeline:
         
         return df
     
-    def _save_splits(self, train_df: pd.DataFrame, val_df: pd.DataFrame, 
-                 test_df: pd.DataFrame, holdout_df: pd.DataFrame = None) -> dict:
+    def _save_splits(
+        self, 
+        train_df: pd.DataFrame, 
+        val_df: pd.DataFrame, 
+        test_df: pd.DataFrame, 
+        holdout_df: pd.DataFrame = None
+    ) -> dict:
         """
         Save train/val/test/holdout splits as parquet files.
         
@@ -437,9 +659,9 @@ class TextPreparationPipeline:
         val_df[columns_to_save].to_parquet(val_path, index=False)
         test_df[columns_to_save].to_parquet(test_path, index=False)
         
-        print(f"  Saved train → {train_path} [preprocessed + tokenized]")
-        print(f"  Saved val   → {val_path} [preprocessed + tokenized]")
-        print(f"  Saved test  → {test_path} [preprocessed + tokenized]")
+        print(f"  Saved train -> {train_path} [preprocessed + tokenized]")
+        print(f"  Saved val   -> {val_path} [preprocessed + tokenized]")
+        print(f"  Saved test  -> {test_path} [preprocessed + tokenized]")
         
         result = {
             "train": str(train_path),
@@ -456,14 +678,14 @@ class TextPreparationPipeline:
             # Save only: text (raw), designation, description, labels, prdtypecode
             holdout_columns = ["designation", "description", "text", "labels", "prdtypecode"]
             holdout_df[holdout_columns].to_parquet(holdout_path, index=False)
-            print(f"  Saved holdout → {holdout_path} [RAW TEXT - not preprocessed]")
+            print(f"  Saved holdout -> {holdout_path} [RAW TEXT - not preprocessed]")
             
             result["holdout"] = str(holdout_path)
             result["num_holdout"] = len(holdout_df)
         
         return result
 
-    
+
 # Standalone execution for testing
 if __name__ == "__main__":
     import logging
@@ -486,7 +708,11 @@ if __name__ == "__main__":
     
     # Preprocess
     pipeline = TextPreparationPipeline()
-    output_paths = pipeline.preprocess_batch(df, retrain=False, save_holdout=True)
+    output_paths = pipeline.prepare_training_data(
+        df, 
+        combine_existing_data=False, 
+        save_holdout=True
+    )
     
     print("\n" + "=" * 60)
     print("PREPROCESSING COMPLETE!")

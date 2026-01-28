@@ -66,13 +66,13 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     # Device selection (same as prediction service)
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-        print("✓ Using Apple Metal (MPS) acceleration")
+        print(" Using Apple Metal (MPS) acceleration")
     elif torch.cuda.is_available():
         device = torch.device("cuda")
-        print(f"✓ Using CUDA acceleration (GPU: {torch.cuda.get_device_name(0)})")
+        print(f" Using CUDA acceleration (GPU: {torch.cuda.get_device_name(0)})")
     else:
         device = torch.device("cpu")
-        print("✓ Using CPU (consider GPU for faster training)")
+        print(" Using CPU (consider GPU for faster training)")
     
     print(f"Working directory: {os.getcwd()}")
     
@@ -194,11 +194,11 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     if retrain and model_path.exists():
         # Load existing tokenizer from saved model
         tokenizer = AutoTokenizer.from_pretrained(str(model_path))
-        print(f"✓ Loaded existing tokenizer from {model_path}")
+        print(f" Loaded existing tokenizer from {model_path}")
     else:
         # Load base tokenizer
         tokenizer = AutoTokenizer.from_pretrained(bert_model)
-        print(f"✓ Loaded base tokenizer: {bert_model}")
+        print(f" Loaded base tokenizer: {bert_model}")
     
     # Data collator (handles dynamic padding during training)
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -220,7 +220,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             id2label=id2label,
             label2id=label2id
         )
-        print(f"✓ Loaded existing model from {model_path} for retraining")
+        print(f" Loaded existing model from {model_path} for retraining")
     else:
         # Load fresh pretrained base model
         model = AutoModelForSequenceClassification.from_pretrained(
@@ -229,7 +229,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             id2label=id2label,
             label2id=label2id
         )
-        print(f"✓ Loaded fresh pretrained model: {bert_model}")
+        print(f" Loaded fresh pretrained model: {bert_model}")
     
     ################################################
     ### FREEZE/UNFREEZE LAYERS (LLRD Setup)
@@ -249,32 +249,32 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         for name, param in model.bert.named_parameters():
             if name.startswith(f"encoder.layer.{layer_idx}"):
                 param.requires_grad = True
-    print(f"✓ Unfroze encoder layers: {unfreeze_layers}")
+    print(f" Unfroze encoder layers: {unfreeze_layers}")
     
     # Unfreeze pooler if configured
     if train_params["unfreeze_pooler"]:
         for name, param in model.bert.named_parameters():
             if "pooler" in name:
                 param.requires_grad = True
-        print(f"✓ Unfroze pooler")
+        print(f" Unfroze pooler")
     
     # Unfreeze classifier (always)
     for p in model.classifier.parameters():
         p.requires_grad = True
-    print(f"✓ Unfroze classifier")
+    print(f" Unfroze classifier")
     
     # Count trainable parameters
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     trainable_pct = 100 * trainable_params / total_params
     
-    print(f"✓ Total parameters:     {total_params:,}")
-    print(f"✓ Trainable parameters: {trainable_params:,} ({trainable_pct:.1f}%)")
-    print(f"✓ Frozen parameters:    {total_params - trainable_params:,}")
+    print(f" Total parameters:     {total_params:,}")
+    print(f" Trainable parameters: {trainable_params:,} ({trainable_pct:.1f}%)")
+    print(f" Frozen parameters:    {total_params - trainable_params:,}")
     
     # Move model to device
     model.to(device)
-    print(f"\n✓ Model moved to: {device}")
+    print(f"\n Model moved to: {device}")
     
     ################################################
     ### LAYER-WISE LEARNING RATE DECAY (LLRD)
@@ -408,10 +408,10 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     
     if train_params["llrd"]["enabled"]:
         optimizer_params = get_llrd_params(model, train_params)
-        print(f"\n✓ Using LLRD with {len(optimizer_params)} parameter groups")
+        print(f"\n Using LLRD with {len(optimizer_params)} parameter groups")
     else:
         optimizer_params = model.parameters()
-        print(f"\n✓ Using standard optimizer (no LLRD)")
+        print(f"\n Using standard optimizer (no LLRD)")
     
     optimizer = torch.optim.AdamW(
         optimizer_params,
@@ -526,7 +526,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     metadata_path = model_path / "training_metadata.json"
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"✓ Training metadata saved to: {metadata_path}")
+    print(f" Training metadata saved to: {metadata_path}")
     
     # Save training/validation comparison
     comparison = {
@@ -537,10 +537,11 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         }
     }
     
-    comparison_path = models_dir / "train_val_comparison.json"
+    evaluation_dir = get_path("results.evaluation") / model_name
+    comparison_path = evaluation_dir / "train_val_comparison.json"
     with open(comparison_path, "w") as f:
         json.dump(comparison, f, indent=2)
-    print(f"✓ Train/val comparison saved to: {comparison_path}")
+    print(f" Train/val comparison saved to: {comparison_path}")
     
     # Summary
     print(f"\n{'='*60}")

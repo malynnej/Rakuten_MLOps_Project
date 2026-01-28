@@ -18,6 +18,9 @@ from sklearn.metrics import (
     precision_score,
     recall_score
 )
+# Set non-interactive backend BEFORE importing pyplot
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for background tasks
 import matplotlib.pyplot as plt
 import seaborn as sns
 import json

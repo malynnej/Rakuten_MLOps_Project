@@ -1,12 +1,17 @@
-# src/predict/api.py
+"""
+Prediction API - Real-time inference service
+
+Handles:
+- Single text prediction
+- Product prediction (designation + description)
+- Batch prediction
+"""
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 import sys
 from pathlib import Path
-
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.predict_text import PredictionService
 
@@ -43,6 +48,24 @@ class BatchTextInput(BaseModel):
     return_probabilities: bool = False
     top_k: int = 5
 
+# Root endpoint
+@app.get("/")
+async def root():
+    """API root with usage information"""
+    return {
+        "service": "Rakuten ML Prediction API",
+        "version": "1.0.0",
+        "description": "Real-time product category prediction",
+        "endpoints": {
+            "predict": "POST /predict - Predict from raw text",
+            "predict_product": "POST /predict/product - Predict from designation + description",
+            "predict_batch": "POST /predict/batch - Batch prediction",
+            "model_info": "GET /model/info - Model information",
+            "health": "GET /health - Health check"
+        },
+        "docs": "/docs",
+        "timestamp": datetime.now().isoformat()
+    }
 
 @app.get("/health")
 async def health():
@@ -51,17 +74,18 @@ async def health():
         "status": "healthy",
         "service": "prediction-service",
         "model_loaded": predictor is not None,
-        "device": str(predictor.device) if predictor else None
+        "device": str(predictor.device) if predictor else None,
+        "timestamp": datetime.now().isoformat()
     }
 
 
-@app.post("/predict")
+@app.post("/predict/text")
 async def predict_text(input_data: TextInput):
     """
     Predict category for single text.
     
     Example:
-        POST /predict
+        POST /predict/text
         {
             "text": "Nike running shoes",
             "return_probabilities": true,
