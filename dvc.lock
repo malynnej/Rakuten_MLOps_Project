@@ -60,3 +60,40 @@ stages:
       md5: 72933993f78739380d0f9217bcce23ab.dir
       size: 53
       nfiles: 1
+  evaluate:
+    cmd: uv run python -m src.evaluate_model.run_evaluate --model_name 
+      bert-rakuten-final
+    deps:
+    - path: config/params.yaml
+      hash: md5
+      md5: 581a5f6bc7f8d0c9cd3711f7412b90c0
+      size: 4134
+    - path: config/paths.yaml
+      hash: md5
+      md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
+      size: 768
+    - path: data/preprocessed
+      hash: md5
+      md5: 53c7724b89321745b58235746895a8ef.dir
+      size: 43986170
+      nfiles: 4
+    - path: models/bert-rakuten-final
+      hash: md5
+      md5: 72933993f78739380d0f9217bcce23ab.dir
+      size: 53
+      nfiles: 1
+    - path: src/evaluate_model
+      hash: md5
+      md5: dd567d4b72484f4bfd47ee2b3b723280.dir
+      size: 69663
+      nfiles: 12
+    - path: src/evaluate_model/services
+      hash: md5
+      md5: 177c211a75fab3dca6490d5f20bdf048.dir
+      size: 50771
+      nfiles: 4
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: a176593524545f937bedd4e2eb18901f
+      size: 122
