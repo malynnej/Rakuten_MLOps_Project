@@ -84,8 +84,8 @@ stages:
       nfiles: 1
     - path: src/evaluate_model
       hash: md5
-      md5: dd567d4b72484f4bfd47ee2b3b723280.dir
-      size: 69663
+      md5: 7ca4a77b71f4d5dabca551db237cf16b.dir
+      size: 70157
       nfiles: 12
     - path: src/evaluate_model/services
       hash: md5
