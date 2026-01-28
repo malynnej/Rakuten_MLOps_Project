@@ -57,15 +57,20 @@ jobs:
 
       - name: Ruff check (lint only, changed files)
         if: steps.changed-files.outputs.files != ''
+        shell: bash
         run: |
-          echo "Running Ruff on:"
-          echo "${{ steps.changed-files.outputs.files }}"
-          uv run ruff check ${{ steps.changed-files.outputs.files }}
+          set -euo pipefail
+          FILES="$(echo "${{ steps.changed-files.outputs.files }}" | tr '\n' ' ')"
+          echo "Running Ruff on: $FILES"
+          uv run ruff check $FILES
 
       - name: Ruff format check (no changes)
         if: steps.changed-files.outputs.files != ''
+        shell: bash
         run: |
-          uv run ruff format --check ${{ steps.changed-files.outputs.files }}
+          set -euo pipefail
+          FILES="$(echo "${{ steps.changed-files.outputs.files }}" | tr '\n' ' ')"
+          uv run ruff format --check $FILES
 
       - name: No Python changes
         if: steps.changed-files.outputs.files == ''
