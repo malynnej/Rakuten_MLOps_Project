@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-# Make sure this service folder is on PYTHONPATH
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import argparse
@@ -16,11 +15,9 @@ def main() -> None:
     parser.add_argument("--model_name", default="bert-rakuten-final")
     args = parser.parse_args()
 
-    # --------------------------------------------------
-    # FAST EVALUATE MODE (DVC smoke test, no heavy eval)
-    # --------------------------------------------------
+    # DVC smoke test
     if os.getenv("DVC_FAST_EVAL") == "1":
-        print("⚡ FAST EVAL MODE: writing dummy metrics only")
+        print("FAST EVAL MODE: writing dummy metrics only")
         Path("metrics").mkdir(exist_ok=True)
 
         metrics = {
@@ -34,15 +31,22 @@ def main() -> None:
             json.dump(metrics, f, indent=2)
 
         return
-    # --------------------------------------------------
 
-    # Normal evaluation (real)
-    from services.evaluate_text import ModelEvaluator  # local import to keep fast mode lightweight
+    # Safety: prevent "real eval" on a fast/dummy model
+    from core.config import get_path
+    models_dir = get_path("models.save_dir")
+    marker = models_dir / args.model_name / "FAST_TRAIN.txt"
+    if marker.exists():
+        raise RuntimeError(
+            f"FAST model marker found at {marker}. "
+            "Refusing real evaluation. Train a real model first or set DVC_FAST_EVAL=1."
+        )
+
+    from services.evaluate_text import ModelEvaluator  
 
     evaluator = ModelEvaluator(model_name=args.model_name)
     results = evaluator.evaluate_dataset()
 
-    # Write lightweight DVC metrics
     Path("metrics").mkdir(exist_ok=True)
 
     metrics = {
