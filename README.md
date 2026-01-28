@@ -96,6 +96,18 @@ If you work on this repository and install/add new libraries, please follow this
 SERVICE PIPELINE (UPDATED)
 ------------
 
+DVC is used  to version control data, models, and evaluation output
+------------
+Tracked via DVC:
+data/raw/
+data/preprocessed/
+models/bert-rakuten-final
+metrics/metrics.json
+> `uv run dvc repro`  <- reproduce the full pipeline
+
+DVC artifacts are stored in a shared DAGsHub remote to ensure reproducibility across the team.
+> `uv run dvc pull`  <- To pull tracked data and models
+
 Import raw data
 ------------
 The raw data is not tracked by Github due to its size (added to .gitignore), so please import it once in your local repository:
@@ -120,6 +132,10 @@ Prediction
 > `uv run python -m services.predict_text --text "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 3`  <- run prediction test, execute from src/predict folder (cd command to src/predict folder)
 
 > `uv run python -m services.predict_text --designation "Bloc skimmer PVC sans eclairage" --description "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 5`  <- run prediction test (designation + description), execute from src/predict folder (cd command to src/predict folder)
+
+Eperiment Tracking (MLflow)
+------------
+> `uv run mlflow ui --host 0.0.0.0 --port 5000`  <- prepares the tracking infrastructure; experiment logging will be extended in follow-up work
 
 
 API 
