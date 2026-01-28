@@ -11,6 +11,46 @@ API_ADDRESS = os.environ.get('API_ADDRESS', default='127.0.0.1')
 API_PORT = os.environ.get('API_PORT', default='8000')
 
 
+class TestRoot:
+    """Test class for root API endpoint"""
+
+    @pytest.fixture(scope='class')
+    def req(self):
+        """Request on the root endpoint"""
+        logging.info("Sending request to root endpoint")
+        url = f'http://{API_ADDRESS}:{API_PORT}/'
+        response = requests.get(url=url)
+        return response
+    
+    @pytest.fixture(scope='class')
+    def req_content(self, req):
+        """Extract content from the root endpoint response"""
+        logging.info("Extracting content from root endpoint response")
+        return req.json()
+    
+    def test_root_status_code(self, req):
+        """Test the status code of the root endpoint"""
+        logging.info("Testing root endpoint status code")
+        expected_status_code = 200
+        assert req.status_code == expected_status_code, \
+            f"Expected status code {expected_status_code}, got {req.status_code}"
+    
+    @pytest.mark.parametrize("key, expected_type", [
+        ("service", str),
+        ("version", str),
+        ("description", str),
+        ("endpoints", dict),
+        ("docs", str),
+        ("timestamp", str)
+    ])
+    def test_keys_types(self, req_content, key, expected_type):
+        """Test the returned content keys and types"""
+        assert key in req_content, \
+            f"Key '{key}' not found in response"
+        assert isinstance(req_content[key], expected_type), \
+            f"Content type for '{key}' is not {expected_type}"
+
+
 class TestHealth:
     """Test class for health API endpoint"""
 
@@ -63,17 +103,17 @@ class TestHealth:
 
 class TestPredictSingleText:
     """Test class for single prediction API endpoint"""
+    url = f'http://{API_ADDRESS}:{API_PORT}/predict/text'
     test_text = "Zombie action figure collectible model"
 
     @pytest.fixture(scope='class')
     def req(self):
         """Request on the single prediction endpoint"""
         logging.info("Sending request to single prediction endpoint")
-        url = f'http://{API_ADDRESS}:{API_PORT}/predict/text'
         payload = {
             "text": self.test_text
         }
-        response = requests.post(url=url, json=payload)
+        response = requests.post(url=self.url, json=payload)
         return response
     
     @pytest.fixture(scope='class')
@@ -108,10 +148,103 @@ class TestPredictSingleText:
         expected_text = self.test_text
         assert req_content['text'] == expected_text, \
             f"Expected text '{expected_text}', got '{req_content['text']}'"
+    
+    def test_return_probabilities(self):
+        """Test prediction with return_probabilities=True"""
+        logging.info("Testing single prediction endpoint with return_probabilities=True")
+        payload = {
+            "text": self.test_text,
+            "return_probabilities": True,
+            "top_k": 3
+        }
+        response = requests.post(url=self.url, json=payload)
+        assert response.status_code == 200, \
+            f"Expected status code 200, got {response.status_code}"
+        
+        content = response.json()
+        assert "top_predictions" in content, \
+            f"Key 'top_predictions' not found in response"
+        
+        assert isinstance(content["top_predictions"], list), \
+            f"Content type for 'top_predictions' is not list"
+        
+        assert len(content["top_predictions"]) == payload["top_k"], \
+            f"Expected {payload['top_k']} top predictions, got {len(content['top_predictions'])}"
+
+
+class TestPredictProduct:
+    """Test class for product prediction API endpoint"""
+    url = f'http://{API_ADDRESS}:{API_PORT}/predict/product'
+    test_designation = "Nike Air Max 90"
+    test_description = "Classic running shoes"
+
+    @pytest.fixture(scope='class')
+    def req(self):
+        """Request on the product prediction endpoint"""
+        logging.info("Sending request to product prediction endpoint")
+        payload = {
+            "designation": self.test_designation,
+            "description": self.test_description
+        }
+        response = requests.post(url=self.url, json=payload)
+        return response
+    
+    @pytest.fixture(scope='class')
+    def req_content(self, req):
+        """Extract content from the product prediction endpoint response"""
+        logging.info("Extracting content from product prediction endpoint response")
+        return req.json()
+
+    def test_status_code(self, req):
+        """Test the status code of the product prediction endpoint"""
+        logging.info("Testing product prediction endpoint status code")
+        expected_status_code = 200
+        assert req.status_code == expected_status_code, \
+            f"Expected status code {expected_status_code}, got {req.status_code}"
+    
+    @pytest.mark.parametrize("key, expected_type", [
+        ("text", str),
+        ("cleaned_text", str),
+        ("predicted_category", int),
+        ("confidence", float),
+        ("predicted_label", int),
+        ("designation", str),
+        ("description", str),
+    ])
+    def test_keys_types(self, req_content, key, expected_type):
+        """Test the returned content keys and types"""
+        assert key in req_content, \
+            f"Key '{key}' not found in response"
+        assert isinstance(req_content[key], expected_type), \
+            f"Content type for '{key}' is not {expected_type}"
+        
+    def test_return_probabilities(self):
+        """Test product prediction with return_probabilities=True"""
+        logging.info("Testing product prediction endpoint with return_probabilities=True")
+        payload = {
+            "designation": self.test_designation,
+            "description": self.test_description,
+            "return_probabilities": True,
+            "top_k": 3
+        }
+        response = requests.post(url=self.url, json=payload)
+        assert response.status_code == 200, \
+            f"Expected status code 200, got {response.status_code}"
+        
+        content = response.json()
+        assert "top_predictions" in content, \
+            f"Key 'top_predictions' not found in response"
+        
+        assert isinstance(content["top_predictions"], list), \
+            f"Content type for 'top_predictions' is not list"
+        
+        assert len(content["top_predictions"]) == payload["top_k"], \
+            f"Expected {payload['top_k']} top predictions, got {len(content['top_predictions'])}"
 
 
 class TestPredictBatch:
     """Test class for batch prediction API endpoint"""
+    url = f'http://{API_ADDRESS}:{API_PORT}/predict/batch'
     test_texts = [
         "Wireless Bluetooth headphones with noise cancellation",
         "Organic green tea bags for healthy lifestyle",
@@ -122,11 +255,10 @@ class TestPredictBatch:
     def req(self):
         """Request on the batch prediction endpoint"""
         logging.info("Sending request to batch prediction endpoint")
-        url = f'http://{API_ADDRESS}:{API_PORT}/predict/batch'
         payload = {
             "texts": self.test_texts
         }
-        response = requests.post(url=url, json=payload)
+        response = requests.post(url=self.url, json=payload)
         return response
 
     @pytest.fixture(scope='class')
