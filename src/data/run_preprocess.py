@@ -12,7 +12,7 @@ from services.preprocess.text_preparation_pipeline import TextPreparationPipelin
 
 def main() -> None:
     """
-    DVC entrypoint: 
+    DVC entrypoint:
     """
 
     from urllib.request import urlretrieve
@@ -39,7 +39,6 @@ def main() -> None:
         urlretrieve(bucket + y_name, y_path)
 
     print(f"✓ Raw files ready:\n- {x_path}\n- {y_path}")
-
 
     X = pd.read_csv(x_path)
     y = pd.read_csv(y_path)
