@@ -114,3 +114,7 @@ target/
 # Artifacts
 # /models/
 /models
+
+# OS junk
+.DS_Store
+__MACOSX/
