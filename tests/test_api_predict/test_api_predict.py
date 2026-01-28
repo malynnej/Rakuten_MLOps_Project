@@ -37,7 +37,9 @@ class TestHealth:
     
     @pytest.mark.parametrize("key, expected_type", [
         ("status", str),
-        ("current_model", str),
+        ("service", str),
+        ("model_loaded", bool),
+        ("device", str),
         ("timestamp", str)
     ])
     def test_health_types(self, req_content, key, expected_type):
@@ -59,42 +61,7 @@ class TestHealth:
             f"Expected status '{expected_status_str}', got '{req_content['status']}'"
 
 
-class TestModelInfo:
-    """Test class for model info API endpoint"""
-
-    @pytest.fixture(scope='class')
-    def req(self):
-        """Request on the model info endpoint"""
-        logging.info("Sending request to model info endpoint")
-        url = f'http://{API_ADDRESS}:{API_PORT}/model/info'
-        response = requests.get(url=url)
-        return response
-    
-    @pytest.fixture(scope='class')
-    def req_content(self, req):
-        """Extract content from the model info endpoint response"""
-        logging.info("Extracting content from model info endpoint response")
-        return req.json()
-
-    def test_status_code(self, req):
-        """Test the status code of the model info endpoint"""
-        logging.info("Testing model info endpoint status code")
-        expected_status_code = 200
-        assert req.status_code == expected_status_code, \
-            f"Expected status code {expected_status_code}, got {req.status_code}"
-
-    @pytest.mark.parametrize("key, expected_type", [
-        ("model_path", str),
-        ("num_classes", int),
-        ("device", str)
-    ])
-    def test_types(self, req_content, key, expected_type):
-        """Test the type of the model info endpoint response content"""
-        assert isinstance(req_content[key], expected_type), \
-            f"Content type for '{key}' is not {expected_type}"
-
-
-class TestPredictSingle:
+class TestPredictSingleText:
     """Test class for single prediction API endpoint"""
     test_text = "Zombie action figure collectible model"
 
@@ -102,7 +69,7 @@ class TestPredictSingle:
     def req(self):
         """Request on the single prediction endpoint"""
         logging.info("Sending request to single prediction endpoint")
-        url = f'http://{API_ADDRESS}:{API_PORT}/predict'
+        url = f'http://{API_ADDRESS}:{API_PORT}/predict/text'
         payload = {
             "text": self.test_text
         }
@@ -124,9 +91,10 @@ class TestPredictSingle:
     
     @pytest.mark.parametrize("key, expected_type", [
         ("text", str),
+        ("cleaned_text", str),
         ("predicted_category", int),
         ("confidence", float),
-        ("predicted_index", int),
+        ("predicted_label", int),
     ])
     def test_keys_types(self, req_content, key, expected_type):
         """Test the returned content keys and types"""
