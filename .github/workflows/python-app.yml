@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,10 +32,28 @@ jobs:
 
       - name: Get changed Python files
         id: changed-files
+        shell: bash
         run: |
-          git fetch origin main
-          FILES=$(git diff --name-only --diff-filter=ACMRT origin/main...HEAD | grep -E '\.py$' || true)
-          echo "files=$FILES" >> $GITHUB_OUTPUT
+          set -euo pipefail
+
+          BASE_REF="${{ github.base_ref }}"
+          if [ -z "$BASE_REF" ]; then
+            BASE_REF="main"
+          fi
+
+          git fetch origin "$BASE_REF"
+
+          FILES=$(git diff --name-only --diff-filter=ACMRT "origin/$BASE_REF...HEAD" \
+            | grep -E '\.py$' || true)
+
+          echo "Changed Python files:"
+          echo "$FILES"
+
+          {
+            echo "files<<EOF"
+            echo "$FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Ruff check (lint only, changed files)
         if: steps.changed-files.outputs.files != ''
