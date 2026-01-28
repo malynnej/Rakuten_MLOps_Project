@@ -9,7 +9,13 @@ venv
 # exclude models
 /models/bert-rakuten-final
 /models/Archive
+results/
 
+# DVC outputs (tracked via dvc.yaml)
+models/
+data/preprocessed/
+mlruns/
+mlflow.db
 ##########################################################
 ### down below are .gitignore settings given from template
 ##########################################################
@@ -113,7 +119,6 @@ target/
 
 # Artifacts
 # /models/
-/models
 
 # OS junk
 .DS_Store
