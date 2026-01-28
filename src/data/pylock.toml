@@ -333,10 +333,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a9830475
 
 [[packages]]
 name = "huggingface-hub"
-version = "1.3.3"
+version = "1.3.4"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/02/c3/544cd4cdd4b3c6de8591b56bb69efc3682e9ac81e36135c02e909dd98c5b/huggingface_hub-1.3.3.tar.gz", upload-time = 2026-01-22T13:59:46Z, size = 627649, hashes = { sha256 = "f8be6f468da4470db48351e8c77d6d8115dff9b3daeb30276e568767b1ff7574" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/48/e8/0d032698916b9773b710c46e3b8e0154fc34cd017b151cc316c84c6c34fe/huggingface_hub-1.3.3-py3-none-any.whl", upload-time = 2026-01-22T13:59:45Z, size = 536604, hashes = { sha256 = "44af7b62380efc87c1c3bde7e1bf0661899b5bdfca1fc60975c61ee68410e10e" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/af/25/74af9d16cd59ae15b12467a79a84aa0fe24be4aba68fc4da0c1864d49c17/huggingface_hub-1.3.4.tar.gz", upload-time = 2026-01-26T14:05:10Z, size = 627683, hashes = { sha256 = "c20d5484a611b7b7891d272e8fc9f77d5de025b0480bdacfa858efb3780b455f" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/55/07/3d0c34c345043c6a398a5882e196b2220dc5861adfa18322448b90908f26/huggingface_hub-1.3.4-py3-none-any.whl", upload-time = 2026-01-26T14:05:08Z, size = 536611, hashes = { sha256 = "a0c526e76eb316e96a91e8a1a7a93cf66b0dd210be1a17bd5fc5ae53cba76bfd" } }]
 
 [[packages]]
 name = "idna"
@@ -1465,10 +1465,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/06/7c/34330a89da55610
 
 [[packages]]
 name = "wcwidth"
-version = "0.4.0"
+version = "0.5.0"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/98/0a/dc5110cc99c39df65bac29229c4b637a8304e0914850348d98974c8ecfff/wcwidth-0.4.0.tar.gz", upload-time = 2026-01-26T02:35:58Z, size = 237625, hashes = { sha256 = "46478e02cf7149ba150fb93c39880623ee7e5181c64eda167b6a1de51b7a7ba1" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/b7/f6/da704c5e77281d71723bffbd926b754c0efd57cbcd02e74c2ca374c14cef/wcwidth-0.4.0-py3-none-any.whl", upload-time = 2026-01-26T02:35:57Z, size = 88216, hashes = { sha256 = "8af2c81174b3aa17adf05058c543c267e4e5b6767a28e31a673a658c1d766783" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/64/6e/62daec357285b927e82263a81f3b4c1790215bc77c42530ce4a69d501a43/wcwidth-0.5.0.tar.gz", upload-time = 2026-01-27T01:31:44Z, size = 246585, hashes = { sha256 = "f89c103c949a693bf563377b2153082bf58e309919dfb7f27b04d862a0089333" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/f2/3e/45583b67c2ff08ad5a582d316fcb2f11d6cf0a50c7707ac09d212d25bc98/wcwidth-0.5.0-py3-none-any.whl", upload-time = 2026-01-27T01:31:43Z, size = 93772, hashes = { sha256 = "1efe1361b83b0ff7877b81ba57c8562c99cf812158b778988ce17ec061095695" } }]
 
 [[packages]]
 name = "weasel"

@@ -14,11 +14,8 @@ services:
     ports:
       - "8000:8000" # TODO: remove port mapping (visibility from host) for production
     volumes:
-      - ./models:/models
-    environment:
-      MODELS_DIR: /models
-      MODEL_NAME: bert-rakuten-final
-      # UV_TORCH_BACKEND: cpu  # seems not work as expected
+      - ./models:/app/models:ro
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s
