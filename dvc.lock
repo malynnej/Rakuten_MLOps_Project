@@ -5,8 +5,8 @@ stages:
     deps:
     - path: config/params.yaml
       hash: md5
-      md5: 581a5f6bc7f8d0c9cd3711f7412b90c0
-      size: 4134
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
     - path: config/paths.yaml
       hash: md5
       md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
@@ -24,8 +24,8 @@ stages:
     outs:
     - path: data/preprocessed
       hash: md5
-      md5: 53c7724b89321745b58235746895a8ef.dir
-      size: 43986170
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
       nfiles: 4
   train:
     cmd: uv run python -m src.train_model.run_train --model_name 
@@ -33,16 +33,16 @@ stages:
     deps:
     - path: config/params.yaml
       hash: md5
-      md5: 581a5f6bc7f8d0c9cd3711f7412b90c0
-      size: 4134
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
     - path: config/paths.yaml
       hash: md5
       md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
       size: 768
     - path: data/preprocessed
       hash: md5
-      md5: 53c7724b89321745b58235746895a8ef.dir
-      size: 43986170
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
       nfiles: 4
     - path: src/train_model
       hash: md5
@@ -66,16 +66,16 @@ stages:
     deps:
     - path: config/params.yaml
       hash: md5
-      md5: 581a5f6bc7f8d0c9cd3711f7412b90c0
-      size: 4134
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
     - path: config/paths.yaml
       hash: md5
       md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
       size: 768
     - path: data/preprocessed
       hash: md5
-      md5: 53c7724b89321745b58235746895a8ef.dir
-      size: 43986170
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
       nfiles: 4
     - path: models/bert-rakuten-final
       hash: md5
