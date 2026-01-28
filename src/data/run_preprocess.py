@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pandas as pd
-
 from core.config import get_path
 from services.preprocess.text_preparation_pipeline import TextPreparationPipeline
 
@@ -16,6 +16,7 @@ def main() -> None:
     """
 
     from urllib.request import urlretrieve
+
     from core.config import load_config
 
     raw_dir = Path("data/raw")
