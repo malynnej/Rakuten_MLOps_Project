@@ -51,7 +51,7 @@ Project Organization (`TO BE UPDATED`)
 
 --------
 
-Setup Local Repository
+Setup Local Repository (`TO BE UPDATED`)
 ------------
 
 > `git clone https://github.com/malynnej/Rakuten_MLOps_Project.git ` <- clones remote repository
@@ -85,7 +85,7 @@ Set up of virtual environment
   - [Docker Desktop](https://docs.docker.com/desktop/)
 
 
-Install new libraries
+Install new libraries (`TO BE UPDATED`)
 ------------
 If you work on this repository and install/add new libraries, please follow this workflow:
 
@@ -93,36 +93,78 @@ If you work on this repository and install/add new libraries, please follow this
 > `uv sync`     <- install/update libraries according to pyproject.toml
 > `uv export --no-hashes --format requirements-txt > requirements.txt`  <- creates/updates requirements.txt
 
+SERVICE PIPELINE (UPDATED)
+------------
+
 Import raw data
 ------------
 The raw data is not tracked by Github due to its size (added to .gitignore), so please import it once in your local repository:
 
-Import images
-> Upload the image data folder set directly on local from https://challengedata.ens.fr/participants/challenges/35/, you should save the folders image_train and image_test respecting the following structure
-
-    ├── data
-    │   └── raw           
-    |   |  ├── image_train 
-    |   |  ├── image_test 
-
 Import text data
-> `python data/import_raw_data.py`  <- imports raw data, execute from src folder (cd command to src folder)
+> `uv run python -m services.data_import.import_raw_data`  <- imports raw data, execute from src/data folder (cd command to src/data folder)
 
 Preprocessing
 ------------
-> `uv run python -m src.features.preprocessing_pipeline`  <- run preprocessing (due to path issues use uv run instead of just python)
+> `uv run python -m services.preprocess.text_preparation_pipeline`  <- run preprocessing , execute from src/data folder (cd command to src/data folder)
 
-> `uv run python -m src.models.train_model_text`    <- run training
+Training
+------------
+> `uv run python -m services.train_model_text`    <- run training, execute from src/train_model folder (cd command to src/train_model folder)
 
 Evaluation
 ------------
-> `uv run python -m src.models.evaluate_text --model_path ./models/bert-rakuten-final --dataset_path ./src/data/processed/test_dataset --output_dir ./src/data/results/evaluation`  <- run evaluation (confusion matrix + class report)
+> `uv run python -m services.evaluate_text`  <- run evaluation (confusion matrix + class report), execute from src/evaluate_model folder (cd command to src/evaluate_model folder)
 
-API
+Prediction
 ------------
-`uvicorn src.api.api:app --reload`   <- run API (stop with CTRL + C)
+> `uv run python -m services.predict_text --text "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 3`  <- run prediction test, execute from src/predict folder (cd command to src/predict folder)
 
-Docs accessible (if API is running):
+> `uv run python -m services.predict_text --designation "Bloc skimmer PVC sans eclairage" --description "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 5`  <- run prediction test (designation + description), execute from src/predict folder (cd command to src/predict folder)
+
+
+API 
+------------
+
+Start API from each service (currently tested from each service folder)
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8000 --reload`  <- predict 
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8001 --reload`  <- data
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8002 --reload`  <- training
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8004 --reload`  <- evaluation
+
+Checks
+
+`curl http://localhost:8001/health` <- health check, replace with respective port of service
+
+`curl http://localhost:8001/status` <- status check, replace with respective port of service
+
+`curl http://localhost:8001/results/latest` <- latest results, replace with respective port of service
+
+Data Service (most important)
+
+`curl -X POST http://localhost:8001/import/raw` <- import data
+
+`curl -X POST http://localhost:8001/preprocess/from-raw -H "Content-Type: application/json" -d '{"combine_existing_data": false,"save_holdout": true}'` <- preprocess raw data
+
+Training (most important)
+
+`curl -X POST http://localhost:8002/train -H "Content-Type: application/json" -d '{"retrain": false,"model_name": "bert-rakuten-v1.0.0"}'` <- initial training
+
+
+Evaluation (most important)
+
+`curl -X POST http://localhost:8004/evaluate -H "Content-Type: application/json" -d '{"batch_size": 32,"model_name": "bert-rakuten-final"}'` <- run evaluation
+
+Prediction (most important)
+
+`curl -X POST http://localhost:8000/predict/text -H "Content-Type: application/json" -d '{"text": "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>", "return_probabilities": true,"top_k": 3}'` <- single prediction (text)
+
+`curl -X POST http://localhost:8000/predict/product -H "Content-Type: application/json" -d '{"designation": "Bloc skimmer PVC sans eclairage","description": "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>","return_probabilities": true,"top_k": 3}'` <- single prediction (designation + description)
+
+Docs accessible (if API is running, replace with respective port of service):
 http://127.0.0.1:8000/docs
 
 

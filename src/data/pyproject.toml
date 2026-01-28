@@ -1,0 +1,33 @@
+[project]
+name = "data"
+version = "0.1.0"
+description = "Data import and preprocessing service"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0.3",
+    "numpy>=1.24.3",
+    "scikit-learn>=1.3.0",
+    "transformers>=4.57.3",
+    "nltk==3.8.1",
+    "spacy>=3.8.9",
+    "spacy-langdetect>=0.1.2",
+    "tqdm>=4.66.0",
+    "ftfy>=6.3.1",
+    "bs4==0.0.2",
+    "pyarrow>=17.0.0",        # For parquet support
+    "requests>=2.31.0",       # For S3 downloads
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
+]
+
+[dependency-groups]
+api = [
+    "fastapi>=0.128.0",
+    "uvicorn>=0.40.0",
+    "pydantic>=2.12.4",
+    "python-multipart>=0.0.9",  # For file uploads
+]
+
+[tool.uv]
+default-groups = ["api"]
+
+

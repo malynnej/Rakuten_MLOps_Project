@@ -1,0 +1,157 @@
+# ============================================
+# DATA SERVICE PARAMETERS
+# ============================================
+
+preprocessing:
+  # BERT Model
+  bert_model: "bert-base-uncased"
+  max_length: 128
+  
+  # Text Cleaning
+  html_to_text: true
+  words_encoding: true
+  
+  # Text Outliers
+  transform_outliers: true #
+  llm_model: "en_core_web_sm"
+  word_count_threshold: 250
+  sentence_normalization: true
+  similarity_threshold: 0.8
+  factor: 3
+  
+  # Data Splitting
+  test_size: 0.15          # 15% for final evaluation
+  val_size: 0.15           # 15% for validation during training
+  holdout_size: 0.10       # 10% reserved for retraining simulation
+  random_state: 42         # For reproducibility
+
+  # Combine hybrid strategy
+  replay_ratio: 0.3  # For hybrid strategy (30% old data)
+# ============================================
+# TRAINING SERVICE PARAMETERS
+# ============================================
+
+training:
+  # Model configuration
+  base_model: "bert-base-uncased"
+  model_name: "bert-rakuten-final"
+  
+  # Training hyperparameters
+  num_train_epochs: 5
+  per_device_train_batch_size: 32
+  per_device_eval_batch_size: 32
+  
+  # Optimizer settings
+  learning_rate: 5.0e-5  # Base learning rate for LLRD
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.98
+  adam_epsilon: 1.0e-6
+  
+  # Learning rate schedule
+  warmup_ratio: 0.06
+  lr_scheduler_type: "linear"
+  
+  # Layer-wise Learning Rate Decay (LLRD)
+  llrd:
+    enabled: true
+    lr_decay_factor: 0.85  # Decay factor between layers
+    classifier_lr_multiplier: 3.0  # Classifier head gets 3x base LR
+  
+  # Layer freezing
+  freeze_embeddings: true
+  freeze_encoder_layers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  # Freeze first 10 layers
+  unfreeze_encoder_layers: [10, 11]  # Unfreeze last 2 layers
+  unfreeze_pooler: true
+  
+  # Regularization
+  dropout: 0.1
+  attention_dropout: 0.1
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 3
+    metric: "accuracy"
+    greater_is_better: true
+  
+  # Checkpointing
+  save_strategy: "epoch"
+  save_total_limit: 2  # Keep only 2 best checkpoints
+  load_best_model_at_end: true
+  metric_for_best_model: "accuracy"
+  
+  # Logging
+  logging_strategy: "epoch"
+  logging_first_step: true
+  report_to: "none"  # Or "mlflow" if you add MLflow
+  
+  # Performance
+  fp16: true  # Mixed precision training (only on CUDA)
+  dataloader_num_workers: 4
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  
+  # Evaluation
+  eval_strategy: "epoch"
+  eval_steps: null  # Only evaluate at epoch end
+
+# ============================================
+# PREDICTION SERVICE PARAMETERS
+# ============================================
+
+prediction:
+  # Inference settings
+  batch_size: 32               # Default batch size for batch predictions
+  max_batch_size: 128          # Maximum allowed batch size
+  
+  # Model loading
+  device: "auto"               # "auto", "cuda", "mps", "cpu"
+  
+  # Prediction output
+  return_probabilities: true   # Return probability scores
+  return_top_k: 3              # Return top-K predictions
+  confidence_threshold: 0.5    # Minimum confidence for prediction
+  
+  # Text preprocessing (must match training!)
+  max_length: 128              # Same as training
+  truncation: true
+  padding: "max_length"
+  
+  # API settings
+  timeout_seconds: 30          # Request timeout
+  max_text_length: 10000       # Max characters in input text
+
+# ============================================
+# EVALUATION SERVICE PARAMETERS
+# ============================================
+
+evaluation:
+  # Evaluation settings
+  batch_size: 32
+  
+  # Metrics to compute
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "confusion_matrix"
+  
+  # Report generation
+  reports:
+    classification_report: true
+    confusion_matrix: true
+    normalize_cm: true          # Normalize confusion matrix
+    save_predictions: true
+    
+  # Visualization
+  visualization:
+    confusion_matrix_figsize: [20, 10]
+    confusion_matrix_cmap: "viridis"
+    save_dpi: 300
+  
+  # Confidence analysis
+  confidence_analysis:
+    enabled: true
+    bins: 10                    # Number of confidence bins
