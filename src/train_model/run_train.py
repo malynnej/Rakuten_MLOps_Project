@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Make sure this service folder is on PYTHONPATH
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import argparse
