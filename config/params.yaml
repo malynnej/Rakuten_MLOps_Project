@@ -12,7 +12,7 @@ preprocessing:
   words_encoding: true
   
   # Text Outliers
-  transform_outliers: true #
+  transform_outliers: false #
   llm_model: "en_core_web_sm"
   word_count_threshold: 250
   sentence_normalization: true

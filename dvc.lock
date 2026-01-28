@@ -1,0 +1,29 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: uv run python -m src.data.run_preprocess
+    deps:
+    - path: config/params.yaml
+      hash: md5
+      md5: 0201d327d400047a54d7dcaf9049688f
+      size: 4134
+    - path: config/paths.yaml
+      hash: md5
+      md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
+      size: 768
+    - path: src/data
+      hash: md5
+      md5: 08ca1ed031724d15e1f1e73487d7f69a.dir
+      size: 138162
+      nfiles: 23
+    - path: src/data/services
+      hash: md5
+      md5: f8471ee859a51259acdd67972095fcf3.dir
+      size: 107354
+      nfiles: 12
+    outs:
+    - path: data/preprocessed
+      hash: md5
+      md5: 53c7724b89321745b58235746895a8ef.dir
+      size: 43986170
+      nfiles: 4

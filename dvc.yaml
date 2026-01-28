@@ -1,0 +1,33 @@
+stages:
+  preprocess:
+    cmd: uv run python -m src.data.run_preprocess
+    deps:
+      - src/data
+      - src/data/services
+      - config/params.yaml
+      - config/paths.yaml
+    outs:
+      - data/preprocessed
+
+  train:
+    cmd: uv run python -m src.train_model.run_train --model_name bert-rakuten-final
+    deps:
+      - src/train_model
+      - src/train_model/services
+      - data/preprocessed
+      - config/params.yaml
+      - config/paths.yaml
+    outs:
+      - models/bert-rakuten-final
+
+  evaluate:
+    cmd: uv run python -m src.evaluate_model.run_evaluate --model_name bert-rakuten-final
+    deps:
+      - src/evaluate_model
+      - src/evaluate_model/services
+      - data/preprocessed
+      - models/bert-rakuten-final
+      - config/params.yaml
+      - config/paths.yaml
+    metrics:
+      - metrics/metrics.json
