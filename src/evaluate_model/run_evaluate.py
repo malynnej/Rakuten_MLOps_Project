@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -34,6 +34,7 @@ def main() -> None:
 
     # Safety: prevent "real eval" on a fast/dummy model
     from core.config import get_path
+
     models_dir = get_path("models.save_dir")
     marker = models_dir / args.model_name / "FAST_TRAIN.txt"
     if marker.exists():
@@ -42,7 +43,7 @@ def main() -> None:
             "Refusing real evaluation. Train a real model first or set DVC_FAST_EVAL=1."
         )
 
-    from services.evaluate_text import ModelEvaluator  
+    from services.evaluate_text import ModelEvaluator
 
     evaluator = ModelEvaluator(model_name=args.model_name)
     results = evaluator.evaluate_dataset()

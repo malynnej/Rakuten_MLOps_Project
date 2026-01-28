@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Make sure this service folder is on PYTHONPATH
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import argparse
+
 from services.train_model_text import train_bert_model
 
 
@@ -16,8 +17,9 @@ def main() -> None:
     parser.add_argument("--retrain", action="store_true")
     args = parser.parse_args()
 
-# Smoke Test
+    # Smoke Test
     import os
+
     if os.getenv("DVC_FAST_TRAIN") == "1":
         print("FAST TRAIN MODE: skipping real training")
 
@@ -33,8 +35,8 @@ def main() -> None:
 
         return
 
-
     train_bert_model(retrain=args.retrain, model_name=args.model_name)
+
 
 if __name__ == "__main__":
     main()
