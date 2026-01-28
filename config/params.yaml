@@ -25,6 +25,8 @@ preprocessing:
   holdout_size: 0.10       # 10% reserved for retraining simulation
   random_state: 42         # For reproducibility
 
+  # Combine hybrid strategy
+  replay_ratio: 0.3  # For hybrid strategy (30% old data)
 # ============================================
 # TRAINING SERVICE PARAMETERS
 # ============================================
