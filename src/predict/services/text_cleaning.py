@@ -16,7 +16,7 @@
 # Import important libraries 
 
 # ----------------------------------
-# 📦 Data & Numerical Analysis
+# Data & Numerical Analysis
 # ----------------------------------
 
 import pandas as pd
@@ -26,7 +26,7 @@ tqdm.pandas()
 import time
 
 # ----------------------------------
-# 🧹 Text Processing & NLP
+# Text Processing & NLP
 # ----------------------------------
 
 import html, re, unicodedata

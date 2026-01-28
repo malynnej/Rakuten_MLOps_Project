@@ -117,16 +117,54 @@ Evaluation
 
 Prediction
 ------------
-> `uv run python -m services.predict_text --text "Pgytech Pour Dji Osmo Pocket 4pcs Nd8 Nd16 Nd32 Nd64 Professional Lens Filter @Doauhao3293-Générique; PGYTECH Pour DJI Osmo Pocket 4PCS ND8 Filtre ND64 ND16 nd32 Professional VERRES Caractéristiques: Parfait pour DJI OSMO caméra de poche (non inclus). Contrôlez toutes les situations avec la Cardan. Extrêmement léger châssis en aluminium aviation CNC. Imperméable à l&#39;eau l&#39;huile épreuve et anti-rayures revêtement durci. verre optique SCHOTT allemand pour répondre aux exigences rigoureuses des photographes professionnels. Nanomètre vide multicouche double face pour protéger votre objectif pour améliorer les effets de la clarté et de couleur. La technologie de revêtement multicouche avec de multiples processus de broyage et de polissage afin d&#39;assurer les exigences les plus élevées de la qualité d&#39;image haute définition. Conforme aux normes environnementales de l&#39;UE ROHS de limite à des substances nocives. Système magnétique installation facile et rapide. N&#39;affecter les performances de l&#39;appareil. Caractéristiques: Marque: PGYTECH Matériel:" --probabilities --top_k 3`  <- run prediction test, execute from src/predict folder (cd command to src/predict folder)
+> `uv run python -m services.predict_text --text "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 3`  <- run prediction test, execute from src/predict folder (cd command to src/predict folder)
 
 > `uv run python -m services.predict_text --designation "Bloc skimmer PVC sans eclairage" --description "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 5`  <- run prediction test (designation + description), execute from src/predict folder (cd command to src/predict folder)
 
 
-API (`TO BE UPDATED`)
+API 
 ------------
-`uvicorn src.api.api:app --reload`   <- run API (stop with CTRL + C)
 
-Docs accessible (if API is running):
+Start API from each service (currently tested from each service folder)
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8000 --reload`  <- predict 
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8001 --reload`  <- data
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8002 --reload`  <- training
+
+`uv run uvicorn api:app --host 0.0.0.0 --port 8004 --reload`  <- evaluation
+
+Checks
+
+`curl http://localhost:8001/health` <- health check, replace with respective port of service
+
+`curl http://localhost:8001/status` <- status check, replace with respective port of service
+
+`curl http://localhost:8001/results/latest` <- latest results, replace with respective port of service
+
+Data Service (most important)
+
+`curl -X POST http://localhost:8001/import/raw` <- import data
+
+`curl -X POST http://localhost:8001/preprocess/from-raw -H "Content-Type: application/json" -d '{"combine_existing_data": false,"save_holdout": true}'` <- preprocess raw data
+
+Training (most important)
+
+`curl -X POST http://localhost:8002/train -H "Content-Type: application/json" -d '{"retrain": false,"model_name": "bert-rakuten-v1.0.0"}'` <- initial training
+
+
+Evaluation (most important)
+
+`curl -X POST http://localhost:8004/evaluate -H "Content-Type: application/json" -d '{"batch_size": 32,"model_name": "bert-rakuten-final"}'` <- run evaluation
+
+Prediction (most important)
+
+`curl -X POST http://localhost:8000/predict/text -H "Content-Type: application/json" -d '{"text": "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>", "return_probabilities": true,"top_k": 3}'` <- single prediction (text)
+
+`curl -X POST http://localhost:8000/predict/product -H "Content-Type: application/json" -d '{"designation": "Bloc skimmer PVC sans eclairage","description": "<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>","return_probabilities": true,"top_k": 3}'` <- single prediction (designation + description)
+
+Docs accessible (if API is running, replace with respective port of service):
 http://127.0.0.1:8000/docs
 
 
