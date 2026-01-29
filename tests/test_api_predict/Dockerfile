@@ -1,7 +1,4 @@
-FROM python:3.11-slim
-
-# install uv from prebuilt image
-COPY --from=ghcr.io/astral-sh/uv:0.9.22 /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 WORKDIR /tests
 
@@ -14,6 +11,10 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
-COPY test_api_predict.py .
+COPY . .
 
-CMD ["python", "test_api_predict.py"]
+# set log file path
+ARG LOGDIR
+ENV LOGFILE=${LOGDIR}/test_api_predict.log
+
+CMD pytest | tee ${LOGFILE}

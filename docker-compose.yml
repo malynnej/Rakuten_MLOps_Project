@@ -12,11 +12,8 @@ services:
     ports:
       - "8000:8000" # TODO: remove port mapping (visibility from host) for production
     volumes:
-      - ./models:/models
-    environment:
-      MODELS_DIR: /models
-      MODEL_NAME: bert-rakuten-final
-      # UV_TORCH_BACKEND: cpu  # seems not work as expected
+      - ./models:/app/models:ro
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s
@@ -24,7 +21,10 @@ services:
       retries: 12
 
   test_api_predict:
-    build: tests/test_api_predict
+    build: 
+      context: tests/test_api_predict
+      args:
+        LOGDIR: /logs
     container_name: test_api_predict
     depends_on:
       api_predict:
@@ -36,9 +36,6 @@ services:
     environment:
       API_ADDRESS: predict_api
       API_PORT: 8000
-      LOG_STDOUT: 1  # TODO: disable stdout logging for production
-      LOG_FILE: 1
-      LOGDIR: /logs
 
   nginx:
     build:
