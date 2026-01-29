@@ -16,6 +16,10 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
+# download nltk data files to recommended location
+ENV NLTK_DATA=/usr/share/nltk_data
+RUN python -c "import nltk; nltk.download('punkt', download_dir='$NLTK_DATA')"
+
 # copy full application code
 COPY . .
 
