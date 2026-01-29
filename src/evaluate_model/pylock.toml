@@ -277,10 +277,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a9830475
 
 [[packages]]
 name = "huggingface-hub"
-version = "1.3.4"
+version = "1.3.5"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/af/25/74af9d16cd59ae15b12467a79a84aa0fe24be4aba68fc4da0c1864d49c17/huggingface_hub-1.3.4.tar.gz", upload-time = 2026-01-26T14:05:10Z, size = 627683, hashes = { sha256 = "c20d5484a611b7b7891d272e8fc9f77d5de025b0480bdacfa858efb3780b455f" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/55/07/3d0c34c345043c6a398a5882e196b2220dc5861adfa18322448b90908f26/huggingface_hub-1.3.4-py3-none-any.whl", upload-time = 2026-01-26T14:05:08Z, size = 536611, hashes = { sha256 = "a0c526e76eb316e96a91e8a1a7a93cf66b0dd210be1a17bd5fc5ae53cba76bfd" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/67/e9/2658cb9bc4c72a67b7f87650e827266139befaf499095883d30dabc4d49f/huggingface_hub-1.3.5.tar.gz", upload-time = 2026-01-29T10:34:19Z, size = 627456, hashes = { sha256 = "8045aca8ddab35d937138f3c386c6d43a275f53437c5c64cdc9aa8408653b4ed" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/f9/84/a579b95c46fe8e319f89dc700c087596f665141575f4dcf136aaa97d856f/huggingface_hub-1.3.5-py3-none-any.whl", upload-time = 2026-01-29T10:34:17Z, size = 536675, hashes = { sha256 = "fe332d7f86a8af874768452295c22cd3f37730fb2463cf6cc3295e26036f8ef9" } }]
 
 [[packages]]
 name = "idna"
