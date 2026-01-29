@@ -443,7 +443,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         args=training_args,
         train_dataset=dataset["train"],
         eval_dataset=dataset["val"],
-        tokenizer=tokenizer,
+        #tokenizer=tokenizer,   #not supported furthermore
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         optimizers=(optimizer, None),

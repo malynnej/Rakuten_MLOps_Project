@@ -697,6 +697,7 @@ name = "evaluate-model"
 version = "0.1.0"
 source = { virtual = "src/evaluate_model" }
 dependencies = [
+    { name = "datasets" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
@@ -716,6 +717,7 @@ api = [
 
 [package.metadata]
 requires-dist = [
+    { name = "datasets", specifier = ">=2.19.1" },
     { name = "matplotlib", specifier = ">=3.7.2" },
     { name = "numpy", specifier = ">=1.24.3" },
     { name = "pandas", specifier = ">=2.0.3" },
