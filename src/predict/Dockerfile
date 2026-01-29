@@ -1,7 +1,4 @@
-FROM python:3.11-slim
-
-# install uv from prebuilt image
-COPY --from=ghcr.io/astral-sh/uv:0.9.22 /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 # install curl for health check command
 RUN apt-get update \
@@ -19,10 +16,13 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
-# copy application code
-COPY api.py src/predict/
-COPY predict_text.py src/predict/
+# download nltk data files to recommended location
+ENV NLTK_DATA=/usr/share/nltk_data
+RUN python -c "import nltk; nltk.download('punkt', download_dir='$NLTK_DATA')"
+
+# copy full application code
+COPY . .
 
 # run API application
-CMD ["uvicorn", "src.predict.api:app", \
+CMD ["uvicorn", "api:app", \
      "--host", "0.0.0.0", "--port", "8000"]

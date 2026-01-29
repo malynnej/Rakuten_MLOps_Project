@@ -35,4 +35,4 @@ stop_apis:
 	docker compose down
 
 clean_logs:
-	rm -f logs/test_predict_api.log
+	rm -f logs/*.log
