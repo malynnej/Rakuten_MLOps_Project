@@ -15,6 +15,7 @@ import argparse
 import os
 from pathlib import Path
 from datetime import datetime
+import shutil
 
 from datasets import Dataset, DatasetDict
 from sklearn.utils.class_weight import compute_class_weight
@@ -503,6 +504,12 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     # Save model
     trainer.save_model(str(model_path))
     print(f"✓ Model saved to: {model_path}")
+
+    # Delete checkpoints
+    for checkpoint in Path(model_path).glob("checkpoints/checkpoint-*"):
+        logger.info(f"Deleting {checkpoint.name}")
+        shutil.rmtree(checkpoint)
+
     
     # Save training metadata
     metadata = {
