@@ -43,8 +43,8 @@ services:
       dockerfile: Dockerfile
     container_name: nginx_reverse_proxy
     ports:
-      - "8080:80"
-      - "8443:443"
+      - "8080:8080"
+      - "8443:8443"
     networks: 
       - api_network
       - edge_network
@@ -52,13 +52,16 @@ services:
       api_predict:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 2s
       retries: 3
   
   test_nginx:
-    build: tests/test_nginx
+    build:
+      context: tests/test_nginx
+      args:
+        LOGDIR: /logs
     container_name: test_nginx
     depends_on:
       nginx:
@@ -72,15 +75,11 @@ services:
       NGINX_ADDRESS: nginx_reverse_proxy
       HTTPS_PORT: 8443
       HTTP_PORT: 8080
-      LOG_STDOUT: 1
-      LOG_FILE: 1
-      LOGDIR: /logs
-      CACERT_PATH: /etc/nginx/certs/nginx.crt
+      REQUESTS_CA_BUNDLE: /etc/nginx/certs/nginx.crt
 
 networks:
   api_network:
     # internal network not exposed to host
-    internal: true
+    # internal: true
   edge_network:
     # network exposed to host for reverse proxy
-    internal: false

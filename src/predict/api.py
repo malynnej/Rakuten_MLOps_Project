@@ -16,7 +16,7 @@ from pathlib import Path
 from services.predict_text import PredictionService
 app = FastAPI(
     title="Prediction Service - Rakuten MLOps",
-    root_path="/predict",
+    # root_path="/predict",
 )
 
 # Initialize prediction service at startup
