@@ -1,0 +1,99 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: uv run python -m src.data.run_preprocess
+    deps:
+    - path: config/params.yaml
+      hash: md5
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
+    - path: config/paths.yaml
+      hash: md5
+      md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
+      size: 768
+    - path: src/data
+      hash: md5
+      md5: 08ca1ed031724d15e1f1e73487d7f69a.dir
+      size: 138162
+      nfiles: 23
+    - path: src/data/services
+      hash: md5
+      md5: f8471ee859a51259acdd67972095fcf3.dir
+      size: 107354
+      nfiles: 12
+    outs:
+    - path: data/preprocessed
+      hash: md5
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
+      nfiles: 4
+  train:
+    cmd: uv run python -m src.train_model.run_train --model_name 
+      bert-rakuten-final
+    deps:
+    - path: config/params.yaml
+      hash: md5
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
+    - path: config/paths.yaml
+      hash: md5
+      md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
+      size: 768
+    - path: data/preprocessed
+      hash: md5
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
+      nfiles: 4
+    - path: src/train_model
+      hash: md5
+      md5: 909be7b9d17fb00ea54d425e72bdc142.dir
+      size: 64635
+      nfiles: 12
+    - path: src/train_model/services
+      hash: md5
+      md5: ca71bcc8dabb3cdd1c0fd119442e0324.dir
+      size: 46741
+      nfiles: 4
+    outs:
+    - path: models/bert-rakuten-final
+      hash: md5
+      md5: 72933993f78739380d0f9217bcce23ab.dir
+      size: 53
+      nfiles: 1
+  evaluate:
+    cmd: uv run python -m src.evaluate_model.run_evaluate --model_name 
+      bert-rakuten-final
+    deps:
+    - path: config/params.yaml
+      hash: md5
+      md5: 2b0a3f8a6545346f3edbbd46b60bbff2
+      size: 4133
+    - path: config/paths.yaml
+      hash: md5
+      md5: 52d85e4f2f0f7796a8ec3e3cb49cd270
+      size: 768
+    - path: data/preprocessed
+      hash: md5
+      md5: 59115bc158683aeb8b7ef75a8ff88e00.dir
+      size: 40152025
+      nfiles: 4
+    - path: models/bert-rakuten-final
+      hash: md5
+      md5: 72933993f78739380d0f9217bcce23ab.dir
+      size: 53
+      nfiles: 1
+    - path: src/evaluate_model
+      hash: md5
+      md5: 7ca4a77b71f4d5dabca551db237cf16b.dir
+      size: 70157
+      nfiles: 12
+    - path: src/evaluate_model/services
+      hash: md5
+      md5: 177c211a75fab3dca6490d5f20bdf048.dir
+      size: 50771
+      nfiles: 4
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: a176593524545f937bedd4e2eb18901f
+      size: 122
