@@ -4,9 +4,8 @@
 #
 # 1. Textual Data Preprocessing
 #
-# 1.1
-#   Text Cleaning - Converting the text from html to normal text
-#   Fixing Some encoded words into normal ones
+# 1.1 Text Cleaning - Converting the text from html to normal text Fixing Some
+#   encoded words into normal ones
 
 # 1.2 Text Translation @Rohan
 #
@@ -34,7 +33,9 @@ from bs4 import BeautifulSoup
 
 class TextCleaning:
     """
-    This class can be used to identify and transform the DataFrame text from html to normal text. Moreover, there are findings that some of text words consists of encoded words which will be converted into plausible words.
+    This class can be used to identify and transform the DataFrame text from
+    html to normal text. Moreover, there are findings that some of text words
+    consists of encoded words which will be converted into plausible words.
 
     Parameters :
     ----------------------------
@@ -63,8 +64,8 @@ class TextCleaning:
 
         Parameter :
         --------------
-        df : pandas.DataFrame - input Data frame containing text data
-        columns : List of columns to clean
+        df : pandas.DataFrame - input Data frame containing text data columns :
+        List of columns to clean
 
         Return :
         -------------
@@ -103,7 +104,8 @@ class TextCleaning:
                 # Vectorized HTML unescape
                 df[col] = df[col].fillna("").astype(str).apply(html.unescape)
 
-                # BeautifulSoup parsing (unavoidable apply, but without progress bar)
+                # BeautifulSoup parsing (unavoidable apply, but without progress
+                # bar)
                 df[col] = df[col].apply(
                     lambda x: BeautifulSoup(x, "html.parser").get_text(separator="").strip()
                     if x

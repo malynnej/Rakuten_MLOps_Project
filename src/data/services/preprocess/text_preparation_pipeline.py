@@ -1,13 +1,13 @@
 """
 Text Preparation Pipeline with Retraining Support
 
-Initial Training:
-1. Only use provided raw data (no old preprocessed data) - initial training
+Initial Training: 1. Only use provided raw data (no old preprocessed data) -
+initial training
 
-Handles 3 retraining cases:
-1. Periodic new data (combine old preprocessed data + new raw data) - retraining with fine-tuning only
-2. New classes detection (with periodic approach) - initial training needed (re-fit of label encoder)
-3. Parameter changes (trigger retraining)
+Handles 3 retraining cases: 1. Periodic new data (combine old preprocessed data
++ new raw data) - retraining with fine-tuning only 2. New classes detection
+(with periodic approach) - initial training needed (re-fit of label encoder) 3.
+Parameter changes (trigger retraining)
 """
 
 import json
@@ -31,19 +31,16 @@ class TextPreparationPipeline:
     """
     Unified preprocessing pipeline with retraining support.
 
-    Features:
-    - Text cleaning (HTML removal, encoding fixes)
-    - Outlier transformation (redundant text removal, summarization)
-    - Label encoding with new class detection
-    - Data splitting (train/val/test/holdout)
-    - Tokenization (BERT tokenizer)
-    - Combining new and old preprocessed data
+    Features: - Text cleaning (HTML removal, encoding fixes) - Outlier
+    transformation (redundant text removal, summarization) - Label encoding with
+    new class detection - Data splitting (train/val/test/holdout) - Tokenization
+    (BERT tokenizer) - Combining new and old preprocessed data
     """
 
     def __init__(self):
         """
-        Initialize pipeline components.
-        Loads configs and sets up tokenizer, text cleaner, outlier transformer.
+        Initialize pipeline components. Loads configs and sets up tokenizer,
+        text cleaner, outlier transformer.
         """
         # Load configs
         self.paths_config = load_config("paths")
@@ -81,8 +78,7 @@ class TextPreparationPipeline:
 
         print("PreprocessingPipeline initialized successfully!")
 
-    # ============================================
-    # MAIN ENTRY POINTS
+    # ============================================ MAIN ENTRY POINTS
     # ============================================
 
     def prepare_training_data(
@@ -96,8 +92,8 @@ class TextPreparationPipeline:
 
         Args:
             df: Raw dataframe with designation, description, prdtypecode
-            combine_existing_data: If True, combines new raw data with preprocessed data
-            save_holdout: If True, saves holdout set
+            combine_existing_data: If True, combines new raw data with
+            preprocessed data save_holdout: If True, saves holdout set
 
         Returns:
             dict with paths and metadata
@@ -146,8 +142,7 @@ class TextPreparationPipeline:
 
         return output_paths
 
-    # ============================================
-    # NEW CLASSES DETECTION
+    # ============================================ NEW CLASSES DETECTION
     # ============================================
 
     def _detect_new_classes(self, df: pd.DataFrame) -> Tuple[bool, Dict]:
@@ -155,9 +150,8 @@ class TextPreparationPipeline:
         Detect if new product classes exist in the data.
 
         Returns:
-            (has_new_classes, info_dict)
-            - has_new_classes: True if new classes found
-            - info_dict: Details about new/existing classes
+            (has_new_classes, info_dict) - has_new_classes: True if new classes
+            found - info_dict: Details about new/existing classes
         """
         print("\n>>> Checking for new classes")
 
@@ -209,15 +203,10 @@ class TextPreparationPipeline:
         """
         Core preprocessing pipeline.
 
-        Steps:
-        1. Combine text columns (if not already done)
-        2. Label encoding
-        3. Early Holdout Split
-        4. Clean text (HTML, encoding)
-        5. Transform outliers
-        6. Split new data (train, test, val) and combine with old data if defined
-        7. Tokenize
-        8. Save parquet files
+        Steps: 1. Combine text columns (if not already done) 2. Label encoding
+        3. Early Holdout Split 4. Clean text (HTML, encoding) 5. Transform
+        outliers 6. Split new data (train, test, val) and combine with old data
+        if defined 7. Tokenize 8. Save parquet files
         """
         print("\n" + "=" * 60)
         print("PREPROCESSING PIPELINE")
@@ -240,7 +229,8 @@ class TextPreparationPipeline:
             df_new, combine_existing_data, has_new_classes
         )
 
-        # Step 3: EARLY SPLIT: Separate holdout BEFORE preprocessing for new data
+        # Step 3: EARLY SPLIT: Separate holdout BEFORE preprocessing for new
+        # data
         print("\n>>> Step 3: Splitting holdout (holdout gets raw data)")
         if save_holdout:
             main_df_new, holdout_df_new = self._split_holdout_early(df_new)
@@ -303,15 +293,13 @@ class TextPreparationPipeline:
         """
         Handle all label encoding logic in one place.
 
-        Three scenarios:
-        1. Initial training: Fit new encoder on new data
-        2. Retraining, no new classes: Load existing encoder, encode new data
-        3. Retraining, new classes: Re-fit encoder on old+new prdtypecode
+        Three scenarios: 1. Initial training: Fit new encoder on new data 2.
+        Retraining, no new classes: Load existing encoder, encode new data 3.
+        Retraining, new classes: Re-fit encoder on old+new prdtypecode
 
         Returns:
-            df_new: DataFrame with 'labels' column added
-            encoder_path: Path to label encoder file
-            num_labels: Number of classes
+            df_new: DataFrame with 'labels' column added encoder_path: Path to
+            label encoder file num_labels: Number of classes
         """
         models_dir = get_path("models.save_dir")
         models_dir.mkdir(parents=True, exist_ok=True)
@@ -425,9 +413,8 @@ class TextPreparationPipeline:
         """
         Combine 'designation' and 'description' into single 'text' column.
 
-        Logic:
-        - If description == designation: use only designation (avoid duplication)
-        - Otherwise: concatenate with "; " separator
+        Logic: - If description == designation: use only designation (avoid
+        duplication) - Otherwise: concatenate with "; " separator
 
         Returns:
             df with 'text' column added
@@ -455,14 +442,14 @@ class TextPreparationPipeline:
         """
         Split holdout set BEFORE any preprocessing.
 
-        This ensures holdout data remains "raw" and realistic for:
-        - Testing prediction pipeline (text must go through full preprocessing)
-        - Simulating retraining (new data arrives unprocessed)
+        This ensures holdout data remains "raw" and realistic for: - Testing
+        prediction pipeline (text must go through full preprocessing) -
+        Simulating retraining (new data arrives unprocessed)
 
         Returns:
-            (main_df, holdout_df)
-            - main_df: will be preprocessed and split into train/val/test
-            - holdout_df: raw text, only combined designation+description
+            (main_df, holdout_df) - main_df: will be preprocessed and split into
+            train/val/test - holdout_df: raw text, only combined
+            designation+description
         """
         holdout_size = self.preproc_config["preprocessing"].get("holdout_size", 0.10)
         random_state = self.preproc_config["preprocessing"].get("random_state", 42)
@@ -488,8 +475,9 @@ class TextPreparationPipeline:
         has_new_classes: bool,
     ) -> tuple:
         """
-        Split only NEW data, then combine with OLD splits (if combine_existing_data).
-        If new classes are detected, the old splits will be re-encoded.
+        Split only NEW data, then combine with OLD splits (if
+        combine_existing_data). If new classes are detected, the old splits will
+        be re-encoded.
 
         Args:
             df: Preprocessed dataframe (new data, or combined but not yet split)
@@ -540,7 +528,8 @@ class TextPreparationPipeline:
                 test_df_old = pd.read_parquet(test_file)
                 holdout_df_old = pd.read_parquet(holdout_file)
 
-                # Remove tokenization columns if they exist (will re-tokenize later)
+                # Remove tokenization columns if they exist (will re-tokenize
+                # later)
                 for df_old in [train_df_old, val_df_old, test_df_old]:
                     if "input_ids" in df_old.columns:
                         df_old.drop(columns=["input_ids", "attention_mask"], inplace=True)
@@ -593,14 +582,12 @@ class TextPreparationPipeline:
         """
         Tokenize all texts in dataframe using BERT tokenizer.
 
-        Tokenization settings (same as training):
-        - max_length: from config (default 128)
-        - padding: "max_length" (all sequences same length)
-        - truncation: True (cut long texts)
+        Tokenization settings (same as training): - max_length: from config
+        (default 128) - padding: "max_length" (all sequences same length) -
+        truncation: True (cut long texts)
 
-        Adds columns:
-        - input_ids: token IDs for BERT
-        - attention_mask: padding mask for BERT
+        Adds columns: - input_ids: token IDs for BERT - attention_mask: padding
+        mask for BERT
 
         Returns:
             df with tokenized columns added
@@ -634,8 +621,8 @@ class TextPreparationPipeline:
         """
         Save train/val/test/holdout splits as parquet files.
 
-        Train/Val/Test: Fully preprocessed and tokenized
-        Holdout: Raw text with labels only (for realistic prediction testing)
+        Train/Val/Test: Fully preprocessed and tokenized Holdout: Raw text with
+        labels only (for realistic prediction testing)
         """
         preprocessed_dir = get_path("data.preprocessed")
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
@@ -669,7 +656,8 @@ class TextPreparationPipeline:
         # Save holdout (RAW text, only labels added)
         if holdout_df is not None:
             holdout_path = preprocessed_dir / "holdout_raw.parquet"
-            # Save only: text (raw), designation, description, labels, prdtypecode
+            # Save only: text (raw), designation, description, labels,
+            # prdtypecode
             holdout_columns = ["designation", "description", "text", "labels", "prdtypecode"]
             holdout_df[holdout_columns].to_parquet(holdout_path, index=False)
             print(f"  Saved holdout -> {holdout_path} [RAW TEXT - not preprocessed]")

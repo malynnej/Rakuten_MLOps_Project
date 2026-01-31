@@ -2,8 +2,8 @@
 """
 BERT Text Classification Training Pipeline
 
-Loads preprocessed parquet data from Data Service.
-Trains BERT model with Layer-wise Learning Rate Decay (LLRD).
+Loads preprocessed parquet data from Data Service. Trains BERT model with
+Layer-wise Learning Rate Decay (LLRD).
 """
 
 import argparse
@@ -31,11 +31,13 @@ from transformers import (
 
 def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-final"):
     """
-    Train or retrain BERT text classification model with LLRD and advanced optimizations.
+    Train or retrain BERT text classification model with LLRD and advanced
+    optimizations.
 
     Args:
         retrain (bool): If True, loads existing model for fine-tuning.
-                       If False, trains from pretrained BERT base (initial training).
+                       If False, trains from pretrained BERT base (initial
+                       training).
         model_name (str): Name of model directory to save/load
 
     Returns:
@@ -152,8 +154,8 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print("CREATING HUGGINGFACE DATASETS")
     print(f"{'=' * 60}\n")
 
-    # Convert pandas DataFrames to HuggingFace Datasets
-    # Note: Data is already tokenized by Data Service!
+    # Convert pandas DataFrames to HuggingFace Datasets Note: Data is already
+    # tokenized by Data Service!
     dataset_train = Dataset.from_pandas(train_df[["input_ids", "attention_mask", "labels"]])
     dataset_val = Dataset.from_pandas(val_df[["input_ids", "attention_mask", "labels"]])
     dataset_test = Dataset.from_pandas(test_df[["input_ids", "attention_mask", "labels"]])
@@ -271,16 +273,13 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         """
         Create parameter groups with layer-wise learning rate decay.
 
-        Strategy:
-        - Classifier head: base_lr * 3.0 (highest LR)
-        - Pooler: base_lr
-        - Encoder layers: progressively smaller (layer 11 → 0)
-        - Embeddings: smallest LR
+        Strategy: - Classifier head: base_lr * 3.0 (highest LR) - Pooler:
+        base_lr - Encoder layers: progressively smaller (layer 11 → 0) -
+        Embeddings: smallest LR
 
         Args:
-            model: BERT model
-            base_lr: Base learning rate
-            lr_decay: Decay factor between layers (0.85 = 15% decay per layer)
+            model: BERT model base_lr: Base learning rate lr_decay: Decay factor
+            between layers (0.85 = 15% decay per layer)
 
         Returns:
             list: Parameter groups for optimizer

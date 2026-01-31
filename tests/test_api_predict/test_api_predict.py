@@ -301,7 +301,8 @@ class TestPredictBatch:
         )
 
     def test_predictions_length(self, req_content):
-        """Test that the returned predictions length matches the input list length"""
+        """Test that the returned predictions length matches the input list
+        length"""
         expected_length = len(self.test_texts)
         assert req_content["count"] == expected_length, (
             f"Expected count {expected_length}, got {req_content['count']}"

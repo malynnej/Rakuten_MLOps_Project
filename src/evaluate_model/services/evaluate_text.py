@@ -2,9 +2,9 @@
 """
 Model Evaluation Service
 
-Evaluates trained BERT model on test data.
-Generates classification reports, confusion matrices, and predictions.
-Works with preprocessed parquet data from Data Service.
+Evaluates trained BERT model on test data. Generates classification reports,
+confusion matrices, and predictions. Works with preprocessed parquet data from
+Data Service.
 """
 
 # Set non-interactive backend BEFORE importing pyplot
@@ -40,12 +40,8 @@ class ModelEvaluator:
     """
     Evaluate trained BERT model and generate comprehensive reports.
 
-    Features:
-    - Classification report with per-class metrics
-    - Confusion matrix visualization
-    - Prediction export
-    - Top-K accuracy
-    - Confidence analysis
+    Features: - Classification report with per-class metrics - Confusion matrix
+    visualization - Prediction export - Top-K accuracy - Confidence analysis
     """
 
     def __init__(self, model_path: Optional[str] = None, model_name: str = "bert-rakuten-final"):
@@ -124,11 +120,9 @@ class ModelEvaluator:
         """
         Load preprocessed test data from parquet file.
 
-        Data is ALREADY:
-        - Cleaned (HTML removed, encoding fixed)
-        - Transformed (outliers handled)
-        - Tokenized (BERT input_ids, attention_mask)
-        - Encoded (labels are integers)
+        Data is ALREADY: - Cleaned (HTML removed, encoding fixed) - Transformed
+        (outliers handled) - Tokenized (BERT input_ids, attention_mask) -
+        Encoded (labels are integers)
 
         Args:
             test_path: Path to test.parquet. If None, loads from config.
@@ -151,8 +145,8 @@ class ModelEvaluator:
         print(f"\n✓ Loaded test data: {len(test_df):,} samples")
         print(f"  Columns: {list(test_df.columns)}")
 
-        # Convert to HuggingFace Dataset
-        # Data is already tokenized by Data Service!
+        # Convert to HuggingFace Dataset Data is already tokenized by Data
+        # Service!
         test_cols = ["input_ids", "attention_mask", "labels"]
 
         missing_cols = [col for col in test_cols if col not in test_df.columns]
@@ -172,8 +166,8 @@ class ModelEvaluator:
         Get predictions for entire dataset.
 
         Args:
-            dataloader: DataLoader with test data
-            return_logits: If True, also return raw logits
+            dataloader: DataLoader with test data return_logits: If True, also
+            return raw logits
 
         Returns:
             tuple: (labels, predictions, probabilities, [logits])
@@ -232,9 +226,8 @@ class ModelEvaluator:
         Generate comprehensive classification report.
 
         Args:
-            labels: Ground truth labels
-            predictions: Predicted labels
-            save_path: Path to save JSON report
+            labels: Ground truth labels predictions: Predicted labels save_path:
+            Path to save JSON report
 
         Returns:
             dict: Classification report
@@ -301,10 +294,9 @@ class ModelEvaluator:
         Generate and visualize confusion matrix.
 
         Args:
-            labels: Ground truth labels
-            predictions: Predicted labels
-            save_path: Path to save confusion matrix image
-            normalize: If True, normalize by true label counts
+            labels: Ground truth labels predictions: Predicted labels save_path:
+            Path to save confusion matrix image normalize: If True, normalize by
+            true label counts
 
         Returns:
             np.ndarray: Confusion matrix
@@ -360,8 +352,7 @@ class ModelEvaluator:
         Analyze prediction confidence.
 
         Args:
-            labels: Ground truth labels
-            predictions: Predicted labels
+            labels: Ground truth labels predictions: Predicted labels
             probabilities: Prediction probabilities (softmax outputs)
 
         Returns:
@@ -435,9 +426,9 @@ class ModelEvaluator:
         Complete evaluation pipeline.
 
         Args:
-            dataset: HuggingFace Dataset to evaluate. If None, loads test.parquet.
-            batch_size: Batch size for evaluation
-            output_dir: Output directory for results. If None, uses config.
+            dataset: HuggingFace Dataset to evaluate. If None, loads
+            test.parquet. batch_size: Batch size for evaluation output_dir:
+            Output directory for results. If None, uses config.
 
         Returns:
             dict: Complete evaluation results

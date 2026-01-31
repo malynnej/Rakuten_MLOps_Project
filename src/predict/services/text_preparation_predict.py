@@ -1,14 +1,12 @@
 """
 Preprocessing pipeline for prediction/inference.
 
-Applies the SAME transformations as training:
-- Text cleaning (HTML removal, encoding fixes)
-- Outlier transformation (redundancy removal, summarization)
-- Tokenization (BERT)
+Applies the SAME transformations as training: - Text cleaning (HTML removal,
+encoding fixes) - Outlier transformation (redundancy removal, summarization) -
+Tokenization (BERT)
 
-Handles:
-- Single text prediction (API requests)
-- Product field combination (designation + description)
+Handles: - Single text prediction (API requests) - Product field combination
+(designation + description)
 """
 
 import pickle
@@ -25,11 +23,9 @@ class TextPreparationPredict:
     """
     Prediction preprocessing pipeline.
 
-    Uses SAME preprocessing as training to ensure consistency:
-    1. Combine fields (designation + description)
-    2. Clean text (HTML, encoding)
-    3. Transform outliers (remove redundancy, summarize)
-    4. Tokenize (BERT)
+    Uses SAME preprocessing as training to ensure consistency: 1. Combine fields
+    (designation + description) 2. Clean text (HTML, encoding) 3. Transform
+    outliers (remove redundancy, summarize) 4. Tokenize (BERT)
     """
 
     def __init__(self, label_encoder_path: str = None):
@@ -82,8 +78,8 @@ class TextPreparationPredict:
     @classmethod
     def from_config(cls, config: dict, label_encoder_path: str = None):
         """
-        Alternative constructor using config dict directly.
-        Used by PredictionService.
+        Alternative constructor using config dict directly. Used by
+        PredictionService.
         """
         return cls(label_encoder_path=label_encoder_path)
 
@@ -91,18 +87,16 @@ class TextPreparationPredict:
         """
         Preprocess single text for prediction.
 
-        Applies SAME transformations as training:
-        1. Clean text (HTML removal, encoding fixes)
-        2. Transform outliers (remove redundancy, summarize long texts)
-        3. Tokenize with BERT
+        Applies SAME transformations as training: 1. Clean text (HTML removal,
+        encoding fixes) 2. Transform outliers (remove redundancy, summarize long
+        texts) 3. Tokenize with BERT
 
         Args:
             text: Raw text string (can contain HTML, special characters)
 
         Returns:
             dict: {
-                "input_ids": List[int],
-                "attention_mask": List[int],
+                "input_ids": List[int], "attention_mask": List[int],
                 "cleaned_text": str
             }
 
@@ -153,8 +147,8 @@ class TextPreparationPredict:
         Combines fields using the same logic as training pipeline.
 
         Args:
-            designation: Product title
-            description: Product description (optional)
+            designation: Product title description: Product description
+            (optional)
 
         Returns:
             dict: Same as preprocess_text()
@@ -173,9 +167,8 @@ class TextPreparationPredict:
         """
         Combine product fields into single text.
 
-        Logic (SAME as training):
-        - If description empty: use only designation
-        - If description == designation: use only designation (avoid duplication)
+        Logic (SAME as training): - If description empty: use only designation -
+        If description == designation: use only designation (avoid duplication)
         - Otherwise: "designation; description"
         """
         if not description or description.strip() == "":

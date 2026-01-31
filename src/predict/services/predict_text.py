@@ -1,8 +1,8 @@
 """
 Production inference service for product category prediction.
 
-Uses shared preprocessing library for consistency with training.
-Handles device management (CPU/CUDA/MPS) and batch prediction.
+Uses shared preprocessing library for consistency with training. Handles device
+management (CPU/CUDA/MPS) and batch prediction.
 """
 
 from pathlib import Path
@@ -19,11 +19,9 @@ class PredictionService:
     """
     Production prediction service for API endpoints.
 
-    Features:
-    - Automatic device detection (CPU/CUDA/MPS)
-    - Single and batch prediction
-    - Top-K probability predictions
-    - Consistent preprocessing with training
+    Features: - Automatic device detection (CPU/CUDA/MPS) - Single and batch
+    prediction - Top-K probability predictions - Consistent preprocessing with
+    training
     """
 
     def __init__(self, model_path: Optional[str] = None):
@@ -31,7 +29,8 @@ class PredictionService:
         Initialize prediction service.
 
         Args:
-            model_path: Path to saved model directory. If None, loads from config.
+            model_path: Path to saved model directory. If None, loads from
+            config.
         """
         # Load configuration
         self.config = load_config("params")
@@ -96,9 +95,9 @@ class PredictionService:
         Predict category for single text or batch of texts.
 
         Args:
-            text: Single text string or list of texts
-            return_probabilities: If True, return top-K probabilities
-            top_k: Number of top predictions to return (default: 5)
+            text: Single text string or list of texts return_probabilities: If
+            True, return top-K probabilities top_k: Number of top predictions to
+            return (default: 5)
 
         Returns:
             Single dict or list of dicts with predictions
@@ -109,7 +108,8 @@ class PredictionService:
         if single_input:
             text = [text]
 
-        # Preprocess texts using shared library (NO category_id - this is inference!)
+        # Preprocess texts using shared library (NO category_id - this is
+        # inference!)
         preprocessed = []
         for txt in text:
             result = self.text_preparation_predict.preprocess_text(txt)
@@ -180,10 +180,10 @@ class PredictionService:
         Predict for large batches efficiently with mini-batching.
 
         Args:
-            texts: List of texts to classify
-            batch_size: Number of texts to process at once (adjust based on GPU memory)
-            return_probabilities: If True, return top-K probabilities
-            top_k: Number of top predictions to return
+            texts: List of texts to classify batch_size: Number of texts to
+            process at once (adjust based on GPU memory) return_probabilities:
+            If True, return top-K probabilities top_k: Number of top predictions
+            to return
 
         Returns:
             List of prediction dictionaries
@@ -222,9 +222,8 @@ class PredictionService:
         Predict category for product with designation and description.
 
         Args:
-            designation: Product title
-            description: Product description (optional)
-            return_probabilities: If True, return top-K probabilities
+            designation: Product title description: Product description
+            (optional) return_probabilities: If True, return top-K probabilities
             top_k: Number of top predictions to return
 
         Returns:
@@ -243,8 +242,8 @@ class PredictionService:
         return result
 
 
-# ============================================================
-# CLI usage for testing
+# ============================================================ CLI usage for
+# testing
 # ============================================================
 if __name__ == "__main__":
     import argparse

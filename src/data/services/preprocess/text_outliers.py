@@ -1,5 +1,4 @@
-# General
-# Execution time
+# General Execution time
 import time
 from string import punctuation
 
@@ -20,31 +19,44 @@ tqdm.pandas()
 
 class TransformTextOutliers:
     """
-    This class can be used to identify and analyse outliers in text within a data frame. These outliers can then be transformed to meet the necessary requirements.
-    The following functions are provided:
+    This class can be used to identify and analyse outliers in text within a
+    data frame. These outliers can then be transformed to meet the necessary
+    requirements. The following functions are provided:
 
-    1. text_stats_calc(): Calculates descriptive statistics based on word and sentence measures.
-    2. outlier_analysis(): Analyzes and visualizes text outliers regarding the results of the previous function. A threshold can be defined to define text outliers.
-    3. tokenize_sents(): Sentence tokenization and optional normalization based on nltk library (sent_tokenize).
-    4. cosine_similarity_calc(): Uses TF-IDF vectors to compute cosine similarity between sentences, identifying and condensing redundant text information.
-    5. word_frequency(): Analyzes text to identify the frequency of non-stop words and non-punctuation tokens to calculate word frequency for text summarization.
-    6. summarizer(): Produces text summarization, retaining the most important sentences based on word frequencies.
-    7. transform_outliers(): Applies all previous functions to transform text outliers in a data frame.
+    1. text_stats_calc(): Calculates descriptive statistics based on word and
+       sentence measures.
+    2. outlier_analysis(): Analyzes and visualizes text outliers regarding the
+       results of the previous function. A threshold can be defined to define
+       text outliers.
+    3. tokenize_sents(): Sentence tokenization and optional normalization based
+       on nltk library (sent_tokenize).
+    4. cosine_similarity_calc(): Uses TF-IDF vectors to compute cosine
+       similarity between sentences, identifying and condensing redundant text
+       information.
+    5. word_frequency(): Analyzes text to identify the frequency of non-stop
+       words and non-punctuation tokens to calculate word frequency for text
+       summarization.
+    6. summarizer(): Produces text summarization, retaining the most important
+       sentences based on word frequencies.
+    7. transform_outliers(): Applies all previous functions to transform text
+       outliers in a data frame.
 
     Parameters:
     -----------------------------
-    column_to_transform (str): Column name to transform
-    model: Pre-trained LLM from spaCy library for summarization of text. It analyzes the syntax and structure of the text to provide sentence boundaries. (default: en_core_web_en)
-    word_count_threshold (int): Threshold for outlier detection
+    column_to_transform (str): Column name to transform model: Pre-trained LLM
+    from spaCy library for summarization of text. It analyzes the syntax and
+    structure of the text to provide sentence boundaries. (default:
+    en_core_web_en) word_count_threshold (int): Threshold for outlier detection
     sentence_normalization: Lowercasing sentences. (default: True)
-    similarity_threshold: Defines the threshold for sentence similarity. (default: 0.8)
-    factor: Factor for calculating the word count threshold based on average word counts and standard deviation. (default: 3)
+    similarity_threshold: Defines the threshold for sentence similarity.
+    (default: 0.8) factor: Factor for calculating the word count threshold based
+    on average word counts and standard deviation. (default: 3)
 
     Returns:
     -----------------------------
-    transformed_dataframe: Data frame with transformed text column.
-    stats_init: Dirctionary of statistical text measures pre-transformation.
-    stats_post: Dirctionary of statistical text measures post-transformation.
+    transformed_dataframe: Data frame with transformed text column. stats_init:
+    Dirctionary of statistical text measures pre-transformation. stats_post:
+    Dirctionary of statistical text measures post-transformation.
 
     """
 
@@ -86,7 +98,8 @@ class TransformTextOutliers:
     # Text statistics in data frame
     def text_stats_calc(self, dataframe):
         """
-        This function provides a statistical calculation of word and sentence mesures.
+        This function provides a statistical calculation of word and sentence
+        mesures.
 
         Input:
         -----------------------------
@@ -94,9 +107,9 @@ class TransformTextOutliers:
 
         Returns:
         -----------------------------
-        stats: Dictionary containing statistical measures (min, max, mean, std) of word and sentences counts.
-        word_counts: Series of counted words per row.
-        sentence_counts: Series of counted sentences per row.
+        stats: Dictionary containing statistical measures (min, max, mean, std)
+        of word and sentences counts. word_counts: Series of counted words per
+        row. sentence_counts: Series of counted sentences per row.
 
         """
 
@@ -158,14 +171,17 @@ class TransformTextOutliers:
 
         Input:
         -----------------------------
-        dataframe: Data frame containing "text" column.
-        factor: Factor for calculating the word count threshold based on average word counts and standard deviation. (default: 3)
-        display_graph: Activates graphical representations of outlier analysis (boxenplots of word and sentence counts). (default: False)
+        dataframe: Data frame containing "text" column. factor: Factor for
+        calculating the word count threshold based on average word counts and
+        standard deviation. (default: 3) display_graph: Activates graphical
+        representations of outlier analysis (boxenplots of word and sentence
+        counts). (default: False)
 
         Returns:
         -----------------------------
-        violated_obeservation: Data frame containing all observations with text outliers.
-        stats: Dictionary containing statistical measures (min, max, mean, std) of word and sentences counts.
+        violated_obeservation: Data frame containing all observations with text
+        outliers. stats: Dictionary containing statistical measures (min, max,
+        mean, std) of word and sentences counts.
 
         """
 
@@ -203,9 +219,10 @@ class TransformTextOutliers:
     # Tokenize sentences
     def tokenize_sents(self, sentences):
         """
-        This function provides tokenized sentences with nltk library using the method sent_tokenize().
-        The sentences can be normalized (lowercased) optionally.
-        The main purpose of this function is to provide customized tokenization for calculationg cosine similarity.
+        This function provides tokenized sentences with nltk library using the
+        method sent_tokenize(). The sentences can be normalized (lowercased)
+        optionally. The main purpose of this function is to provide customized
+        tokenization for calculationg cosine similarity.
 
         Input:
         -----------------------------
@@ -232,13 +249,15 @@ class TransformTextOutliers:
     def cosine_similarity_calc(self, sentences, display_similarity=False):
         """
         This function calculates cosine similarity of tokenized sentences.
-        Senetences with cosine similarity according to defined threshold are eliminated.
+        Senetences with cosine similarity according to defined threshold are
+        eliminated.
 
         Input:
         -----------------------------
         sentences: Text strings containing multiple sentences.
-        display_similarity: Activates heatmap with cosine similarites. (default: False)
-        -> (Caution: This fuctionallity is only for single string analysis and NOT for comlete data frame due to high computational costs)
+        display_similarity: Activates heatmap with cosine similarites. (default:
+        False) -> (Caution: This fuctionallity is only for single string
+        analysis and NOT for comlete data frame due to high computational costs)
 
         Returns:
         -----------------------------
@@ -283,8 +302,8 @@ class TransformTextOutliers:
     # Calculate word frequency
     def word_frequency(self, doc):
         """
-        This function calculates the word frequency of significant words within a doc object.
-        Stop words are not taken into account.
+        This function calculates the word frequency of significant words within
+        a doc object. Stop words are not taken into account.
 
         Input:
         -----------------------------
@@ -292,7 +311,8 @@ class TransformTextOutliers:
 
         Returns:
         -----------------------------
-        word_frequencies: Dictionary of unique, non-stop-word, and non-punctuation token according to number of occurances in document.
+        word_frequencies: Dictionary of unique, non-stop-word, and
+        non-punctuation token according to number of occurances in document.
 
         """
 
@@ -310,9 +330,12 @@ class TransformTextOutliers:
     # Summarize text
     def summarizer(self, text):
         """
-        This function summarizes given text, retaining the most important sentences based on word frequencies.
-        It sorts the sentences within the document object according to the sum of the frequencies of tokens they contain.
-        The three sentences with the highest scores, indicating they consist of the most frequently occurring words, are retained to form the summary.
+        This function summarizes given text, retaining the most important
+        sentences based on word frequencies. It sorts the sentences within the
+        document object according to the sum of the frequencies of tokens they
+        contain. The three sentences with the highest scores, indicating they
+        consist of the most frequently occurring words, are retained to form the
+        summary.
 
         Input:
         -----------------------------
@@ -350,7 +373,8 @@ class TransformTextOutliers:
 
     def transform_outliers(self, dataframe):
         """
-        This function applies statistical text analysis, cleaning of redundant sentences and summarization according threshold of word counts.
+        This function applies statistical text analysis, cleaning of redundant
+        sentences and summarization according threshold of word counts.
 
         Input:
         -----------------------------
