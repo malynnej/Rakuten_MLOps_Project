@@ -104,7 +104,11 @@ class TextPreparationPipeline:
         print("TEXT PREPARATION PIPELINE")
         print("=" * 60)
         print(
-            f"Mode: {'Combine with preprocessed data' if combine_existing_data else 'only new raw data'}"
+            f"Mode: {
+                'Combine with preprocessed data' 
+                if combine_existing_data 
+                else 'only new raw data'
+            }"
         )
         print(f"Input data: {len(df):,} samples")
         print(f"Save holdout: {save_holdout}")
@@ -459,10 +463,10 @@ class TextPreparationPipeline:
         )
 
         print(
-            f"  Main data: {len(main_df)} ({len(main_df) / len(df) * 100:.1f}%) [will be preprocessed]"
+            f"Main data: {len(main_df)} ({len(main_df) / len(df) * 100:.1f}%) [will be preprocessed]"
         )
         print(
-            f"  Holdout:   {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) [stays RAW]"
+            f"Holdout: {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) [stays RAW]"
         )
 
         return main_df, holdout_df
@@ -556,13 +560,13 @@ class TextPreparationPipeline:
                 test_df = pd.concat([test_df_old, test_df_new], ignore_index=True)
                 holdout_df = pd.concat([holdout_df_old, holdout_df], ignore_index=True)
 
-                print("\n  Combined splits:")
+                print("\nCombined splits:")
                 print(
-                    f"    Train: {len(train_df)} (old: {len(train_df_old)}, new: {len(train_df_new)})"
+                    f"Train: {len(train_df)} (old: {len(train_df_old)}, new: {len(train_df_new)})"
                 )
-                print(f"    Val:   {len(val_df)} (old: {len(val_df_old)}, new: {len(val_df_new)})")
+                print(f"Val:   {len(val_df)} (old: {len(val_df_old)}, new: {len(val_df_new)})")
                 print(
-                    f"    Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})"
+                    f"Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})"
                 )
             else:
                 print("\n  No existing splits found - using new splits only")

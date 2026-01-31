@@ -1,8 +1,8 @@
 """
 Convert holdout_raw.parquet to JSON for prediction testing.
 
-Extracts designation and description fields (raw data)
-and saves as JSON for easy prediction testing.
+Extracts designation and description fields (raw data) and saves as JSON for
+easy prediction testing.
 """
 
 import json
@@ -20,8 +20,8 @@ def create_holdout_json(num_samples: int = 100, output_name: str = "holdout_test
     Convert holdout parquet to JSON format.
 
     Args:
-        num_samples: Number of samples to extract (default: 100)
-        output_name: Output JSON filename
+        num_samples: Number of samples to extract (default: 100) output_name:
+        Output JSON filename
     """
     print("=" * 60)
     print("CREATING HOLDOUT TEST JSON")
@@ -31,10 +31,10 @@ def create_holdout_json(num_samples: int = 100, output_name: str = "holdout_test
     holdout_path = Path("data/preprocessed/holdout_raw.parquet")
 
     if not holdout_path.exists():
-        print(f" Holdout data not found at: {holdout_path}")
-        print("   Run preprocessing first:")
+        print(f"Holdout data not found at: {holdout_path}")
+        print("Run preprocessing first:")
         print(
-            "   uv run --package data python src/data/services/preprocess/text_preparation_pipeline.py"
+            "uv run --package data python src/data/services/preprocess/text_preparation_pipeline.py"
         )
         return
 
@@ -52,8 +52,7 @@ def create_holdout_json(num_samples: int = 100, output_name: str = "holdout_test
         sample_df = holdout_df
         print(f"✓ Using all {len(sample_df)} samples")
 
-    # Create JSON structure
-    # Format 1: Simple text list (for basic testing)
+    # Create JSON structure Format 1: Simple text list (for basic testing)
     texts = sample_df["text"].tolist()
 
     # Format 2: Full product data (with ground truth)
@@ -87,7 +86,7 @@ def create_holdout_json(num_samples: int = 100, output_name: str = "holdout_test
         json.dump({"products": products}, f, indent=2, ensure_ascii=False)
 
     print(f"✓ Saved full format to: {full_path}")
-    print('  Format: {"products": [{designation, description, text, true_category, ...}, ...]}')
+    print('Format: {"products": [{designation, description, text, true_category, ...}, ...]}')
 
     # Print summary
     print(f"\n{'=' * 60}")
@@ -111,11 +110,11 @@ def create_holdout_json(num_samples: int = 100, output_name: str = "holdout_test
     print("USAGE EXAMPLES")
     print(f"{'=' * 60}")
     print("\n1. Test with simple format:")
-    print("   uv run --package predict python src/predict/services/predict_text.py \\")
+    print("uv run --package predict python src/predict/services/predict_text.py \\")
     print(f"     --file {simple_path}")
 
     print("\n2. Test with full format (use in custom script):")
-    print(f"   python scripts/test_predictions.py --file {full_path}")
+    print(f"python scripts/test_predictions.py --file {full_path}")
 
     return simple_path, full_path
 

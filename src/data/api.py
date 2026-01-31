@@ -2,12 +2,9 @@
 """
 Data Service API with Retraining Support
 
-Handles:
-1. Importing raw data from S3
-2. Preprocessing data for training (with strategy selection)
-3. New class detection and handling
-4. Batch preprocessing from uploaded files
-5. Retraining workflows (full/hybrid strategies)
+Handles: 1. Importing raw data from S3 2. Preprocessing data for training (with
+strategy selection) 3. New class detection and handling 4. Batch preprocessing
+from uploaded files 5. Retraining workflows (full/hybrid strategies)
 """
 
 import os
@@ -23,8 +20,7 @@ from services.preprocess.text_preparation_pipeline import TextPreparationPipelin
 
 app = FastAPI(title="Rakuten ML Data Service API")
 
-# ============================================
-# GLOBAL STATE
+# ============================================ GLOBAL STATE
 # ============================================
 
 # Initialize pipeline
@@ -53,8 +49,7 @@ async def startup():
         pipeline = None
 
 
-# ============================================
-# REQUEST MODELS
+# ============================================ REQUEST MODELS
 # ============================================
 
 
@@ -68,16 +63,14 @@ class BatchPreprocessRequest(BaseModel):
     save_holdout: bool = True
 
 
-# ============================================
-# RAW DATA IMPORT ENDPOINTS
+# ============================================ RAW DATA IMPORT ENDPOINTS
 # ============================================
 
 
 @app.post("/import/raw")
 async def import_raw_endpoint(background_tasks: BackgroundTasks):
     """
-    Import raw data from S3 bucket.
-    Downloads X_train and y_train CSV files.
+    Import raw data from S3 bucket. Downloads X_train and y_train CSV files.
     Runs in background to avoid timeout.
 
     Example:
@@ -156,8 +149,7 @@ async def import_status():
     }
 
 
-# ============================================
-# NEW CLASS DETECTION
+# ============================================ NEW CLASS DETECTION
 # ============================================
 
 
@@ -166,12 +158,12 @@ async def check_new_classes(file: UploadFile = File(...)):
     """
     Check if uploaded data contains new product classes.
 
-    Use this before preprocessing to determine:
-    - If label encoder must be re-fitted due to new classes
+    Use this before preprocessing to determine: - If label encoder must be
+    re-fitted due to new classes
 
     Example:
-        POST /preprocess/check-new-classes
-        - Upload CSV file with 'prdtypecode' column
+        POST /preprocess/check-new-classes - Upload CSV file with 'prdtypecode'
+        column
 
     Returns:
         Information about new classes and recommendations
@@ -207,7 +199,8 @@ async def check_new_classes(file: UploadFile = File(...)):
         # Generate recommendation based on results
         if has_new_classes:
             recommendation = {
-                "reason": "New classes detected - label encoder must be re-fitted and model retrained from scratch"
+                "reason": """New classes detected - label encoder must be re-fitted and 
+                model retrained from scratch"""
             }
         else:
             recommendation = {
@@ -230,8 +223,7 @@ async def check_new_classes(file: UploadFile = File(...)):
         )
 
 
-# ============================================
-# PREPROCESSING ENDPOINTS
+# ============================================ PREPROCESSING ENDPOINTS
 # ============================================
 
 
@@ -243,10 +235,8 @@ async def preprocess_from_raw(request: PreprocessRequest, background_tasks: Back
     Automatically detects and handles new classes.
 
     Example:
-        POST /preprocess/from-raw
-        {
-            "combine_existing_data": false,
-            "save_holdout": true
+        POST /preprocess/from-raw {
+            "combine_existing_data": false, "save_holdout": true
         }
     """
     global processing_status, pipeline
@@ -380,15 +370,13 @@ async def preprocess_batch(
     """
     Preprocess uploaded CSV file with retraining support.
 
-    Use cases:
-    - Upload new product data for retraining
-    - Test preprocessing on custom dataset
-    - Simulate new data arrival
+    Use cases: - Upload new product data for retraining - Test preprocessing on
+    custom dataset - Simulate new data arrival
 
     Example:
-        POST /preprocess/batch
-        - Upload CSV file with columns: designation, description, prdtypecode
-        - Form data: combine_existing_data= False (default), save_holdout = False (default)
+        POST /preprocess/batch - Upload CSV file with columns: designation,
+        description, prdtypecode - Form data: combine_existing_data= False
+        (default), save_holdout = False (default)
     """
     global pipeline
 
@@ -443,8 +431,7 @@ async def preprocess_batch(
         )
 
 
-# ============================================
-# STATUS & INFO ENDPOINTS
+# ============================================ STATUS & INFO ENDPOINTS
 # ============================================
 
 
@@ -578,8 +565,7 @@ async def check_prerequisites():
     }
 
 
-# ============================================
-# ROOT ENDPOINT
+# ============================================ ROOT ENDPOINT
 # ============================================
 
 
@@ -620,8 +606,7 @@ async def root():
     }
 
 
-# ============================================
-# RUN SERVER
+# ============================================ RUN SERVER
 # ============================================
 
 if __name__ == "__main__":

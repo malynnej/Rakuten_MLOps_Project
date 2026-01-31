@@ -18,9 +18,6 @@
 # Data & Numerical Analysis
 # ----------------------------------
 
-from tqdm import tqdm
-
-tqdm.pandas()
 # ----------------------------------
 # Text Processing & NLP
 # ----------------------------------
@@ -29,6 +26,9 @@ import time
 
 import ftfy
 from bs4 import BeautifulSoup
+from tqdm import tqdm
+
+tqdm.pandas()
 
 
 class TextCleaning:
