@@ -1,6 +1,7 @@
-import yaml
-import os
 from pathlib import Path
+
+import yaml
+
 
 def get_project_root() -> Path:
     """Find project root (where config/ folder is)"""

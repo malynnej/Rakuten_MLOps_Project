@@ -7,34 +7,33 @@ Generates classification reports, confusion matrices, and predictions.
 Works with preprocessed parquet data from Data Service.
 """
 
-import torch
-import numpy as np
-import pandas as pd
-from sklearn.metrics import (
-    classification_report, 
-    confusion_matrix, 
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score
-)
 # Set non-interactive backend BEFORE importing pyplot
 import matplotlib
+import numpy as np
+import pandas as pd
+import torch
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+
 matplotlib.use('Agg')  # Use non-interactive backend for background tasks
-import matplotlib.pyplot as plt
-import seaborn as sns
 import json
 import pickle
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from torch.utils.data import DataLoader
-from transformers import default_data_collator
+import matplotlib.pyplot as plt
+import seaborn as sns
+from core.config import get_path
 from datasets import Dataset
-
-from core.config import load_config, get_path
+from torch.utils.data import DataLoader
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, default_data_collator
 
 
 class ModelEvaluator:
@@ -84,11 +83,11 @@ class ModelEvaluator:
         )
         self.model.to(self.device)
         self.model.eval()  # Set to evaluation mode
-        print(f"✓ Model loaded")
+        print("✓ Model loaded")
         
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(str(self.model_path))
-        print(f"✓ Tokenizer loaded")
+        print("✓ Tokenizer loaded")
         
         # Load label encoder (created by Data Service)
         le_path = self.model_path.parent / "label_encoder.pkl"
@@ -108,7 +107,7 @@ class ModelEvaluator:
         self.label2id = self.model.config.label2id
         self.num_labels = len(self.id2label)
         
-        print(f"\n✓ Evaluator ready!")
+        print("\n✓ Evaluator ready!")
         print(f"  Device: {self.device}")
         print(f"  Num labels: {self.num_labels}")
     
@@ -119,7 +118,7 @@ class ModelEvaluator:
             print("✓ Using Apple Metal (MPS) acceleration")
         elif torch.cuda.is_available():
             device = torch.device("cuda")
-            print(f"✓ Using CUDA acceleration")
+            print("✓ Using CUDA acceleration")
         else:
             device = torch.device("cpu")
             print("✓ Using CPU")
@@ -287,7 +286,7 @@ class ModelEvaluator:
             "macro_recall": float(recall_score(labels, predictions, average='macro', zero_division=0)),
         }
         
-        print(f"\nOverall Metrics:")
+        print("\nOverall Metrics:")
         for metric, value in overall_metrics.items():
             print(f"  {metric:20s}: {value:.4f}")
         
@@ -466,7 +465,7 @@ class ModelEvaluator:
         if dataset is None:
             dataset, test_df = self.load_test_data()
         else:
-            test_df = None
+            pass
         
         # Setup output directory
         if output_dir is None:
@@ -488,7 +487,7 @@ class ModelEvaluator:
             shuffle=False
         )
         
-        print(f"\nEvaluation settings:")
+        print("\nEvaluation settings:")
         print(f"  Dataset size: {len(dataset):,}")
         print(f"  Batch size:   {batch_size}")
         print(f"  Num batches:  {len(dataloader)}")

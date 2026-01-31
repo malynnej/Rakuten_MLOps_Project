@@ -5,14 +5,14 @@ Uses shared preprocessing library for consistency with training.
 Handles device management (CPU/CUDA/MPS) and batch prediction.
 """
 
-import torch
-from transformers import AutoModelForSequenceClassification
-from typing import Union, List, Dict, Optional
-import numpy as np
 from pathlib import Path
+from typing import Dict, List, Optional, Union
+
+import torch
+from core.config import get_path, load_config
+from transformers import AutoModelForSequenceClassification
 
 from services.text_preparation_predict import TextPreparationPredict
-from core.config import load_config, get_path
 
 
 class PredictionService:
@@ -68,7 +68,7 @@ class PredictionService:
             label_encoder_path=str(label_encoder_path)
 )
         
-        print(f"  Predictor ready!")
+        print("  Predictor ready!")
         print(f"   Model: {self.model_path}")
         print(f"   Device: {self.device}")
         print(f"   Num labels: {self.text_preparation_predict.get_num_labels()}")
@@ -329,7 +329,7 @@ if __name__ == "__main__":
     
     elif args.designation:
         # Product prediction
-        print(f"\nPredicting for product:")
+        print("\nPredicting for product:")
         print(f"  Designation: {args.designation}")
         print(f"  Description: {args.description}")
         result = predictor.predict_product(

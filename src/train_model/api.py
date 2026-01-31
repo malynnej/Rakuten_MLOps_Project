@@ -9,15 +9,13 @@ Handles:
 """
 
 import os
-from pathlib import Path
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
-from datetime import datetime
 import traceback
+from datetime import datetime
 
+from core.config import get_path
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from pydantic import BaseModel
 from services.train_model_text import train_bert_model
-from core.config import load_config, get_path
 
 app = FastAPI(title="Rakuten ML Training API")
 
@@ -51,7 +49,7 @@ def run_training(retrain: bool, model_name: str):
         training_status["progress"] = 0
         
         print(f"\n{'='*60}")
-        print(f"BACKGROUND TRAINING STARTED")
+        print("BACKGROUND TRAINING STARTED")
         print(f"{'='*60}\n")
         print(f"Mode: {'Retraining' if retrain else 'Initial training'}")
         print(f"Model: {model_name}")
@@ -80,7 +78,7 @@ def run_training(retrain: bool, model_name: str):
             "model_path": str(get_path("models.save_dir") / model_name)
         }
         
-        print(f"\n Background training completed successfully!")
+        print("\n Background training completed successfully!")
         print(f"   Test accuracy: {metadata.get('test_accuracy', 'N/A'):.4f}")
         print(f"   Duration: {metadata.get('training_duration_seconds', 'N/A'):.1f}s")
         

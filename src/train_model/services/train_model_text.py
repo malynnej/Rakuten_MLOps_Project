@@ -6,30 +6,27 @@ Loads preprocessed parquet data from Data Service.
 Trains BERT model with Layer-wise Learning Rate Decay (LLRD).
 """
 
-import pandas as pd
-import numpy as np
-import torch
-import pickle
-import json
 import argparse
+import json
 import os
-from pathlib import Path
-from datetime import datetime
+import pickle
 import shutil
+from datetime import datetime
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import torch
+from core.config import get_path, load_config
 from datasets import Dataset, DatasetDict
-from sklearn.utils.class_weight import compute_class_weight
-
 from transformers import (
-    AutoTokenizer,
     AutoModelForSequenceClassification,
+    AutoTokenizer,
+    DataCollatorWithPadding,
+    EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
-    DataCollatorWithPadding,
-    EarlyStoppingCallback
 )
-
-from core.config import load_config, get_path
 
 
 def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-final"):
@@ -50,7 +47,6 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print(f"{'='*60}\n")
     
     # Load configuration
-    paths_config = load_config("paths")
     params = load_config("params")
 
     # Extract training parameters
@@ -144,7 +140,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     label2id = {int(k): int(v) for k, v in mappings["label2id"].items()}
     num_labels = mappings["num_labels"]
     
-    print(f"\nLabel mappings loaded:")
+    print("\nLabel mappings loaded:")
     print(f"  Total classes: {num_labels}")
     print(f"  Sample id2label: {dict(list(id2label.items())[:5])}")
     
@@ -169,11 +165,11 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         "test": dataset_test
     })
     
-    print(f"✓ Created HuggingFace datasets:")
+    print("✓ Created HuggingFace datasets:")
     print(dataset)
     
     # Verify data types (input_ids and attention_mask should be lists)
-    print(f"\nData types:")
+    print("\nData types:")
     print(f"  input_ids type: {type(dataset_train['input_ids'][0])}")
     print(f"  attention_mask type: {type(dataset_train['attention_mask'][0])}")
     print(f"  labels type: {type(dataset_train['labels'][0])}")
@@ -257,12 +253,12 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         for name, param in model.bert.named_parameters():
             if "pooler" in name:
                 param.requires_grad = True
-        print(f" Unfroze pooler")
+        print(" Unfroze pooler")
     
     # Unfreeze classifier (always)
     for p in model.classifier.parameters():
         p.requires_grad = True
-    print(f" Unfroze classifier")
+    print(" Unfroze classifier")
     
     # Count trainable parameters
     total_params = sum(p.numel() for p in model.parameters())
@@ -412,7 +408,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
         print(f"\n Using LLRD with {len(optimizer_params)} parameter groups")
     else:
         optimizer_params = model.parameters()
-        print(f"\n Using standard optimizer (no LLRD)")
+        print("\n Using standard optimizer (no LLRD)")
     
     optimizer = torch.optim.AdamW(
         optimizer_params,
@@ -452,7 +448,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     )
     
     
-    print(f"✓ Trainer initialized")
+    print("✓ Trainer initialized")
     print(f"  Training samples:   {len(dataset['train']):,}")
     print(f"  Validation samples: {len(dataset['val']):,}")
     print(f"  Test samples:       {len(dataset['test']):,}")
@@ -489,7 +485,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     
     test_metrics = trainer.evaluate(dataset["test"])
     
-    print(f"Test Results:")
+    print("Test Results:")
     print(f"  Accuracy: {test_metrics['eval_accuracy']:.4f}")
     print(f"  Loss:     {test_metrics['eval_loss']:.4f}")
     

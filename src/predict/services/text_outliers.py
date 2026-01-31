@@ -1,24 +1,20 @@
 # General
-import numpy as np
-import pandas as pd
-
+# Execution time
+import time
+from string import punctuation
 
 # Text preprocessing
 import nltk
+import numpy as np
+import spacy
 from nltk.tokenize import sent_tokenize
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
-from string import punctuation
-
-# Execution time
-import time
 
 # Display progress bars
 from tqdm import tqdm
+
 tqdm.pandas()
 
 

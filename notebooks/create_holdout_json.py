@@ -5,10 +5,11 @@ Extracts designation and description fields (raw data)
 and saves as JSON for easy prediction testing.
 """
 
-import pandas as pd
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pandas as pd
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -80,7 +81,7 @@ def create_holdout_json(
         json.dump({"texts": texts}, f, indent=2, ensure_ascii=False)
     
     print(f"\n✓ Saved simple format to: {simple_path}")
-    print(f"  Format: {{\"texts\": [\"text1\", \"text2\", ...]}}")
+    print("  Format: {\"texts\": [\"text1\", \"text2\", ...]}")
     
     # Save full format
     full_path = output_dir / f"full_{output_name}"
@@ -88,7 +89,7 @@ def create_holdout_json(
         json.dump({"products": products}, f, indent=2, ensure_ascii=False)
     
     print(f"✓ Saved full format to: {full_path}")
-    print(f"  Format: {{\"products\": [{{designation, description, text, true_category, ...}}, ...]}}")
+    print("  Format: {\"products\": [{designation, description, text, true_category, ...}, ...]}")
     
     # Print summary
     print(f"\n{'='*60}")
@@ -111,11 +112,11 @@ def create_holdout_json(
     print(f"\n{'='*60}")
     print("USAGE EXAMPLES")
     print(f"{'='*60}")
-    print(f"\n1. Test with simple format:")
-    print(f"   uv run --package predict python src/predict/services/predict_text.py \\")
+    print("\n1. Test with simple format:")
+    print("   uv run --package predict python src/predict/services/predict_text.py \\")
     print(f"     --file {simple_path}")
     
-    print(f"\n2. Test with full format (use in custom script):")
+    print("\n2. Test with full format (use in custom script):")
     print(f"   python scripts/test_predictions.py --file {full_path}")
     
     return simple_path, full_path

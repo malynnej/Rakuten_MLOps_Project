@@ -1,10 +1,10 @@
+import logging
 import os
 from datetime import datetime
 from typing import List
-import requests
-import pytest
-import logging
 
+import pytest
+import requests
 
 # definition of the API address and port
 API_ADDRESS = os.environ.get('API_ADDRESS', default='127.0.0.1')
@@ -163,10 +163,10 @@ class TestPredictSingleText:
         
         content = response.json()
         assert "top_predictions" in content, \
-            f"Key 'top_predictions' not found in response"
+            "Key 'top_predictions' not found in response"
         
         assert isinstance(content["top_predictions"], list), \
-            f"Content type for 'top_predictions' is not list"
+            "Content type for 'top_predictions' is not list"
         
         assert len(content["top_predictions"]) == payload["top_k"], \
             f"Expected {payload['top_k']} top predictions, got {len(content['top_predictions'])}"
@@ -233,10 +233,10 @@ class TestPredictProduct:
         
         content = response.json()
         assert "top_predictions" in content, \
-            f"Key 'top_predictions' not found in response"
+            "Key 'top_predictions' not found in response"
         
         assert isinstance(content["top_predictions"], list), \
-            f"Content type for 'top_predictions' is not list"
+            "Content type for 'top_predictions' is not list"
         
         assert len(content["top_predictions"]) == payload["top_k"], \
             f"Expected {payload['top_k']} top predictions, got {len(content['top_predictions'])}"

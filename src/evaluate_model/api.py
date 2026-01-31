@@ -10,18 +10,19 @@ Handles:
 """
 
 import os
-from pathlib import Path
 from datetime import datetime
-from fastapi import FastAPI, BackgroundTasks, HTTPException
-from pydantic import BaseModel
+from pathlib import Path
 from typing import Optional
 
 # Set non-interactive backend BEFORE importing pyplot
 import matplotlib
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from pydantic import BaseModel
+
 matplotlib.use('Agg')  # Use non-interactive backend for background tasks
 
+from core.config import get_path
 from services.evaluate_text import ModelEvaluator
-from core.config import load_config, get_path
 
 app = FastAPI(title="Rakuten ML Evaluation API")
 
@@ -54,7 +55,7 @@ async def startup_event():
         
         evaluator = ModelEvaluator(model_path=str(model_path))
         
-        print(f"\nEvaluation service ready!")
+        print("\nEvaluation service ready!")
         print(f"  Model: {model_name}")
         print(f"  Device: {evaluator.device}")
         print(f"  Classes: {evaluator.num_labels}")
@@ -200,7 +201,7 @@ async def evaluate_model(request: EvaluateRequest, background_tasks: BackgroundT
                 "output_files": results["output_files"]
             }
             
-            print(f"\n Background evaluation completed!")
+            print("\n Background evaluation completed!")
             print(f"   Accuracy: {results['accuracy']:.4f}")
             print(f"   Results: {results['output_files']}")
             

@@ -11,14 +11,14 @@ Handles:
 - Product field combination (designation + description)
 """
 
-import pandas as pd
-from transformers import AutoTokenizer
 import pickle
-from pathlib import Path
+
+import pandas as pd
+from core.config import get_path, load_config
+from transformers import AutoTokenizer
 
 from services.text_cleaning import TextCleaning
 from services.text_outliers import TransformTextOutliers
-from core.config import load_config, get_path
 
 
 class TextPreparationPredict:

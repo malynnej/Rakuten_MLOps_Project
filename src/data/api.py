@@ -11,19 +11,15 @@ Handles:
 """
 
 import os
-import sys
-from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
-import pandas as pd
 import traceback
+from datetime import datetime
 
-
+import pandas as pd
+from core.config import get_path, load_config
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from services.data_import.import_raw_data import import_raw_data
 from services.preprocess.text_preparation_pipeline import TextPreparationPipeline
-from core.config import load_config, get_path
 
 app = FastAPI(title="Rakuten ML Data Service API")
 
@@ -103,7 +99,7 @@ async def import_raw_endpoint(background_tasks: BackgroundTasks):
             # Import data
             import_raw_data(raw_dir, filenames, bucket_url)
             
-            print(f"\n✓ Raw data imported successfully!")
+            print("\n✓ Raw data imported successfully!")
             print(f"   Location: {raw_dir}")
             
         except Exception as e:
@@ -338,13 +334,13 @@ async def preprocess_from_raw(
             processing_status["progress"] = 100
             processing_status["results"] = output_paths
             
-            print(f"\n✓ Background preprocessing completed!")
+            print("\n✓ Background preprocessing completed!")
             print(f"   Train: {output_paths['num_train']:,} samples")
             print(f"   Val:   {output_paths['num_val']:,} samples")
             print(f"   Test:  {output_paths['num_test']:,} samples")
             
             if output_paths.get("has_new_classes"):
-                print(f" New classes detected and handled")
+                print(" New classes detected and handled")
             
         except FileNotFoundError as e:
             processing_status["is_processing"] = False

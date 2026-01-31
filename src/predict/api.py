@@ -7,12 +7,10 @@ Handles:
 - Batch prediction
 """
 from datetime import datetime
+from typing import List, Optional
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List
-import sys
-from pathlib import Path
-
 from services.predict_text import PredictionService
 
 app = FastAPI(title="Prediction Service - Rakuten MLOps")

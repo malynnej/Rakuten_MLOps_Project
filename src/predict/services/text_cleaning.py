@@ -19,18 +19,16 @@
 # Data & Numerical Analysis
 # ----------------------------------
 
-import pandas as pd
-import numpy as np
 from tqdm import tqdm
-tqdm.pandas()
-import time
 
+tqdm.pandas()
 # ----------------------------------
 # Text Processing & NLP
 # ----------------------------------
+import html
+import time
 
-import html, re, unicodedata
-import ftfy, nltk
+import ftfy
 from bs4 import BeautifulSoup
 
 

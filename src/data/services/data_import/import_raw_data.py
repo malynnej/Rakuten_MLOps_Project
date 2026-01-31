@@ -1,7 +1,9 @@
-import requests
 import logging
 from pathlib import Path
-from core.config import load_config, get_path
+
+import requests
+from core.config import get_path, load_config
+
 
 def import_raw_data(raw_data_path, filenames, bucket_url):
     """import filenames from bucket_folder_url in raw_data_path"""

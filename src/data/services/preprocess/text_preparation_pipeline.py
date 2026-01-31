@@ -10,21 +10,21 @@ Handles 3 retraining cases:
 3. Parameter changes (trigger retraining)
 """
 
-import pandas as pd
-import numpy as np
+import json
+import pickle
+import time
+from datetime import timedelta
 from pathlib import Path
+from typing import Dict, Tuple
+
+import numpy as np
+import pandas as pd
+from core.config import get_path, load_config
+from services.preprocess.text_cleaning import TextCleaning
+from services.preprocess.text_outliers import TransformTextOutliers
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from transformers import AutoTokenizer
-import pickle
-import json
-import time
-from datetime import datetime, timedelta
-from typing import Optional, Tuple, Dict, Set
-
-from services.preprocess.text_cleaning import TextCleaning
-from services.preprocess.text_outliers import TransformTextOutliers
-from core.config import load_config, get_path
 
 
 class TextPreparationPipeline:
@@ -108,9 +108,9 @@ class TextPreparationPipeline:
         has_new_classes, new_classes_info = self._detect_new_classes(df)
         
         if has_new_classes:
-            print(f"\n  NEW CLASSES DETECTED!")
+            print("\n  NEW CLASSES DETECTED!")
             print(f"   New classes: {new_classes_info['new_classes']}")
-            print(f"   -> Re-fit label encoder")
+            print("   -> Re-fit label encoder")
         
         # Standard preprocessing pipeline
         output_paths = self._preprocess_pipeline(
@@ -133,7 +133,7 @@ class TextPreparationPipeline:
         print("=" * 60)
         print(f"Execution time: {t_exec}")
         if has_new_classes:
-            print(f"New classes detected - label encoder re-fitted")
+            print("New classes detected - label encoder re-fitted")
         
         return output_paths
     
@@ -151,7 +151,7 @@ class TextPreparationPipeline:
             - has_new_classes: True if new classes found
             - info_dict: Details about new/existing classes
         """
-        print(f"\n>>> Checking for new classes")
+        print("\n>>> Checking for new classes")
         
         models_dir = get_path("models.save_dir")
         encoder_path = models_dir / "label_encoder.pkl"
@@ -180,12 +180,12 @@ class TextPreparationPipeline:
         }
         
         if unseen_classes:
-            print(f"  NEW CLASSES DETECTED:")
+            print("  NEW CLASSES DETECTED:")
             print(f"     New classes: {sorted(unseen_classes)}")
             print(f"     Existing:    {len(existing_classes)} classes")
             print(f"     Total now:   {info['num_total']} classes")
-            print(f"  Label encoder must be re-fitted")
-            print(f"  Model must be retrained from scratch")
+            print("  Label encoder must be re-fitted")
+            print("  Model must be retrained from scratch")
             return True, info
         
         print(f"  No new classes - all {len(existing_classes)} classes already known")
@@ -404,7 +404,7 @@ class TextPreparationPipeline:
             self._save_label_mappings(mapping_path)
             
             print(f"    Re-fitted encoder with {len(self.label_encoder.classes_)} classes")
-            print(f"    Old data will be re-encoded when loading splits")
+            print("    Old data will be re-encoded when loading splits")
         
         num_labels = len(self.label_encoder.classes_)
         
@@ -459,7 +459,7 @@ class TextPreparationPipeline:
         # For equal rows, use only designation
         df.loc[mask_equal, "text"] = df.loc[mask_equal, "designation"]
         
-        print(f"  Combined designation + description into text column")
+        print("  Combined designation + description into text column")
         
         return df
     
@@ -532,7 +532,7 @@ class TextPreparationPipeline:
             stratify=train_val_df["labels"]
         )
         
-        print(f"  Split new data:")
+        print("  Split new data:")
         print(f"    Train: {len(train_df_new)} ({len(train_df_new)/len(df)*100:.1f}%)")
         print(f"    Val:   {len(val_df_new)} ({len(val_df_new)/len(df)*100:.1f}%)")
         print(f"    Test:  {len(test_df_new)} ({len(test_df_new)/len(df)*100:.1f}%)")
@@ -546,7 +546,7 @@ class TextPreparationPipeline:
             holdout_file = preprocessed_dir / "holdout_raw.parquet"
             
             if train_file.exists() and val_file.exists() and test_file.exists():
-                print(f"\n  Loading existing splits to combine:")
+                print("\n  Loading existing splits to combine:")
                 
                 # Load old splits (already preprocessed, but NOT tokenized yet)
                 train_df_old = pd.read_parquet(train_file)
@@ -561,7 +561,7 @@ class TextPreparationPipeline:
 
                 # Re-encode old data if new classes detected
                 if has_new_classes:
-                    print(f"  Re-encoding old data with new encoder")
+                    print("  Re-encoding old data with new encoder")
                     train_df_old["labels"] = self.label_encoder.transform(train_df_old["prdtypecode"])
                     val_df_old["labels"] = self.label_encoder.transform(val_df_old["prdtypecode"])
                     test_df_old["labels"] = self.label_encoder.transform(test_df_old["prdtypecode"])
@@ -577,12 +577,12 @@ class TextPreparationPipeline:
                 test_df = pd.concat([test_df_old, test_df_new], ignore_index=True)
                 holdout_df = pd.concat([holdout_df_old, holdout_df], ignore_index=True)
                 
-                print(f"\n  Combined splits:")
+                print("\n  Combined splits:")
                 print(f"    Train: {len(train_df)} (old: {len(train_df_old)}, new: {len(train_df_new)})")
                 print(f"    Val:   {len(val_df)} (old: {len(val_df_old)}, new: {len(val_df_new)})")
                 print(f"    Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})")
             else:
-                print(f"\n  No existing splits found - using new splits only")
+                print("\n  No existing splits found - using new splits only")
                 train_df = train_df_new
                 val_df = val_df_new
                 test_df = test_df_new
