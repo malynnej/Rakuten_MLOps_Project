@@ -42,11 +42,14 @@ class TextPreparationPredict:
         # Load configs
         self.preproc_config = load_config("params")
         
+        model_path = get_path("models.final") 
+
         # Initialize BERT tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.preproc_config["preprocessing"]["bert_model"]
+            str(model_path)
         )
-        
+
+    
         # Load label encoder if provided
         if label_encoder_path:
             with open(label_encoder_path, "rb") as f:

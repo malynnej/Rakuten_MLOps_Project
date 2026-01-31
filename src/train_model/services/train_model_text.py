@@ -507,7 +507,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
 
     # Delete checkpoints
     for checkpoint in Path(model_path).glob("checkpoints/checkpoint-*"):
-        logger.info(f"Deleting {checkpoint.name}")
+        print(f"Deleting {checkpoint.name}")
         shutil.rmtree(checkpoint)
 
     
