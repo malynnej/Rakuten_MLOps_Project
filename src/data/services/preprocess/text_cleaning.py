@@ -4,6 +4,7 @@ import time
 import ftfy
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+
 tqdm.pandas()
 
 ###########################################################################################

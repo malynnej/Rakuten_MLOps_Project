@@ -1,3 +1,11 @@
+import html
+import time
+
+import ftfy
+from bs4 import BeautifulSoup
+from tqdm import tqdm
+
+tqdm.pandas()
 ###########################################################################################
 #
 # Main Data Dreprocessing Pipeline
@@ -18,17 +26,10 @@
 # Data & Numerical Analysis
 # ----------------------------------
 
-from tqdm import tqdm
 
-tqdm.pandas()
 # ----------------------------------
 # Text Processing & NLP
 # ----------------------------------
-import html
-import time
-
-import ftfy
-from bs4 import BeautifulSoup
 
 
 class TextCleaning:
