@@ -461,9 +461,9 @@ class TextPreparationPipeline:
         )
 
         print(
-            f"Main data: {len(main_df)} ({len(main_df) / len(df) * 100:.1f}%) [will be preprocessed]"
+            f"Main data: {len(main_df)} ({len(main_df) / len(df) * 100:.1f}%) will be preprocessed"
         )
-        print(f"Holdout: {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) [stays RAW]")
+        print(f"Holdout: {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) stays RAW")
 
         return main_df, holdout_df
 
