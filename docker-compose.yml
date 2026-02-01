@@ -1,5 +1,66 @@
 services:
 
+  api_data:
+    build:
+      context: src/data
+      dockerfile: Dockerfile
+    container_name: data_api
+    networks: 
+      - rakuten_mlops_network
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data              
+      - ./models:/app/models          
+      - ./config:/app/config:ro       
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api_train:
+    build:
+      context: src/train_model
+      dockerfile: Dockerfile
+    container_name: train_api
+    networks: 
+      - rakuten_mlops_network
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./data:/app/data:ro           
+      - ./models:/app/models          
+      - ./config:/app/config:ro 
+      - ./results:/app/results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api_evaluate:
+    build:
+      context: src/evaluate_model
+      dockerfile: Dockerfile
+    container_name: evaluate_api
+    networks: 
+      - rakuten_mlops_network
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./data:/app/data:ro           
+      - ./models:/app/models:ro       
+      - ./results:/app/results        
+      - ./config:/app/config:ro       
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    environment:
+      - MPLBACKEND=Agg
+
   api_predict:
     build:
       context: src/predict
