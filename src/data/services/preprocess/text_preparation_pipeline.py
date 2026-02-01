@@ -105,9 +105,7 @@ class TextPreparationPipeline:
         print("=" * 60)
         print(
             f"Mode: {
-                'Combine with preprocessed data' 
-                if combine_existing_data 
-                else 'only new raw data'
+                'Combine with preprocessed data' if combine_existing_data else 'only new raw data'
             }"
         )
         print(f"Input data: {len(df):,} samples")
@@ -463,11 +461,9 @@ class TextPreparationPipeline:
         )
 
         print(
-            f"Main data: {len(main_df)} ({len(main_df)/len(df) * 100:.1f}%) [will be preprocessed]"
+            f"Main data: {len(main_df)} ({len(main_df) / len(df) * 100:.1f}%) [will be preprocessed]"
         )
-        print(
-            f"Holdout: {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) [stays RAW]"
-        )
+        print(f"Holdout: {len(holdout_df)} ({len(holdout_df) / len(df) * 100:.1f}%) [stays RAW]")
 
         return main_df, holdout_df
 
@@ -565,9 +561,7 @@ class TextPreparationPipeline:
                     f"Train: {len(train_df)} (old: {len(train_df_old)}, new: {len(train_df_new)})"
                 )
                 print(f"Val:   {len(val_df)} (old: {len(val_df_old)}, new: {len(val_df_new)})")
-                print(
-                    f"Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})"
-                )
+                print(f"Test:  {len(test_df)} (old: {len(test_df_old)}, new: {len(test_df_new)})")
             else:
                 print("\n  No existing splits found - using new splits only")
                 train_df = train_df_new
