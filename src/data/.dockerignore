@@ -1,0 +1,6 @@
+__pycache__
+Dockerfile
+.pytest_cache
+.dockerignore
+*.pyc
+.venv
