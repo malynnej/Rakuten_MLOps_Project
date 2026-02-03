@@ -46,20 +46,20 @@ stages:
       nfiles: 4
     - path: src/train_model
       hash: md5
-      md5: 6f230d652f13cd728a10f51240f0a992.dir
-      size: 536827
-      nfiles: 15
+      md5: 909be7b9d17fb00ea54d425e72bdc142.dir
+      size: 64635
+      nfiles: 12
     - path: src/train_model/services
       hash: md5
-      md5: e75382604ed6459651420716cce0d0ae.dir
-      size: 46244
+      md5: ca71bcc8dabb3cdd1c0fd119442e0324.dir
+      size: 46741
       nfiles: 4
     outs:
     - path: models/bert-rakuten-final
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: 72933993f78739380d0f9217bcce23ab.dir
+      size: 53
+      nfiles: 1
   evaluate:
     cmd: uv run python -m src.evaluate_model.run_evaluate --model_name 
       bert-rakuten-final
