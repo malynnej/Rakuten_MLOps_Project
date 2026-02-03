@@ -1,52 +1,53 @@
+import logging
 import os
-from datetime import datetime
-from typing import List
+
+import pytest
 import requests
 from requests.auth import HTTPBasicAuth
-import pytest
-import logging
-
 
 # definition of the API address and port
-NGINX_ADDRESS = os.environ.get('NGINX_ADDRESS', default='127.0.0.1')
-HTTPS_PORT = os.environ.get('HTTPS_PORT', default='8443')
-HTTP_PORT = os.environ.get('HTTP_PORT', default='8080')
+NGINX_ADDRESS = os.environ.get("NGINX_ADDRESS", default="127.0.0.1")
+HTTPS_PORT = os.environ.get("HTTPS_PORT", default="8443")
+HTTP_PORT = os.environ.get("HTTP_PORT", default="8080")
 
 
 class TestHealthCheck:
     """Test class for Nginx health check endpoint"""
+
     expected_status_code = 200
     expected_text = "OK\n"
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def req(self):
         """Request on the health check endpoint"""
         logging.info("Sending request to health check endpoint")
-        url = f'http://{NGINX_ADDRESS}:{HTTP_PORT}/health'
+        url = f"http://{NGINX_ADDRESS}:{HTTP_PORT}/health"
         response = requests.get(url=url)
         return response
 
     def test_health_status_code(self, req):
         """Test the status code of the health check response"""
         logging.info("Testing health check status code")
-        assert req.status_code == self.expected_status_code, \
+        assert req.status_code == self.expected_status_code, (
             f"Expected status code {self.expected_status_code}, got {req.status_code}"
-    
+        )
+
     def test_health_response_text(self, req):
         """Test the text content of the health check response"""
         logging.info("Testing health check response text")
-        assert req.text == self.expected_text, \
+        assert req.text == self.expected_text, (
             f"Expected text '{self.expected_text}', got '{req.text}'"
+        )
 
 
 class TestRedirect:
     """Test class for HTTP to HTTPS redirection"""
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def req(self):
         """Request on the HTTP endpoint"""
         logging.info("Sending request to HTTP endpoint for redirection test")
-        url = f'http://{NGINX_ADDRESS}:{HTTP_PORT}/'
+        url = f"http://{NGINX_ADDRESS}:{HTTP_PORT}/"
         response = requests.get(url=url, allow_redirects=False)
         return response
 
@@ -54,61 +55,70 @@ class TestRedirect:
         """Test the status code for redirection"""
         logging.info("Testing redirection status code")
         expected_status_code = 301  # Moved Permanently
-        assert req.status_code == expected_status_code, \
+        assert req.status_code == expected_status_code, (
             f"Expected redirect status code {expected_status_code}, got {req.status_code}"
+        )
 
 
 class TestNginxStatus:
     """Test access to nginx status endpoint"""
-    url = f'https://{NGINX_ADDRESS}:{HTTPS_PORT}/nginx_status'
+
+    url = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/nginx_status"
 
     def test_request_unauthorized(self):
         """Test response to unauthorized request"""
         expected_status_code = 401
         response = requests.get(url=self.url)
-        assert response.status_code == expected_status_code, \
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
 
     def test_request_invalid(self):
         """Test response to request with invalid credentials"""
         expected_status_code = 401
-        response = requests.get(url=self.url, auth=HTTPBasicAuth('admin1', 'admin2'))
-        assert response.status_code == expected_status_code, \
+        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin2"))
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
 
     def test_request_valid(self):
         """Test response to request with valid credentials"""
         expected_status_code = 200
-        response = requests.get(url=self.url, auth=HTTPBasicAuth('admin1', 'admin1'))
-        assert response.status_code == expected_status_code, \
+        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin1"))
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
 
 
 class TestForwardPredict:
     """Test forwarding to predict API"""
-    baseUrl = f'https://{NGINX_ADDRESS}:{HTTPS_PORT}/predict'
-    auth = HTTPBasicAuth('user1', 'user1')
+
+    baseUrl = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/predict"
+    auth = HTTPBasicAuth("user1", "user1")
 
     def test_root_unauthorized(self):
         """Test response to unauthorized request"""
         expected_status_code = 401
-        url = f'{self.baseUrl}/'
+        url = f"{self.baseUrl}/"
         response = requests.get(url=url)
-        assert response.status_code == expected_status_code, \
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
 
     def test_root_invalid(self):
         """Test response to request with invalid credentials"""
         expected_status_code = 401
-        url = f'{self.baseUrl}/'
-        response = requests.get(url=url, auth=HTTPBasicAuth('user1', 'user2'))
-        assert response.status_code == expected_status_code, \
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=HTTPBasicAuth("user1", "user2"))
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
 
     def test_root_valid(self):
         """Test response on the predict/ endpoint"""
         expected_status_code = 200
-        url = f'{self.baseUrl}/'
+        url = f"{self.baseUrl}/"
         response = requests.get(url=url, auth=self.auth)
-        assert response.status_code == expected_status_code, \
+        assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
