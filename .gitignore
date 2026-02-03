@@ -12,7 +12,9 @@ venv
 results/
 
 # DVC outputs (tracked via dvc.yaml)
-models/
+models/*
+!models/*.dvc
+!models/
 data/preprocessed/
 mlruns/
 mlflow.db
