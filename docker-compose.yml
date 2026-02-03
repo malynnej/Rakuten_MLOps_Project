@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: data_api
     networks: 
-      - rakuten_mlops_network
+      - api_network
     ports:
       - "8001:8001"
     volumes:
@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     container_name: train_api
     networks: 
-      - rakuten_mlops_network
+      - api_network
     ports:
       - "8002:8002"
     volumes:
@@ -45,7 +45,7 @@ services:
       dockerfile: Dockerfile
     container_name: evaluate_api
     networks: 
-      - rakuten_mlops_network
+      - api_network
     ports:
       - "8004:8004"
     volumes:
