@@ -7,15 +7,15 @@
 venv
 
 # exclude models
--/models/bert-rakuten-final
--/models/Archive
--results/
+/models/bert-rakuten-final
+/models/Archive
+results/
 
 #DVC
-+# DVC outputs (tracked via DVC, keep pointers in git)
-+models/*
-+!models/*.dvc
-+data/preprocessed/
+# DVC outputs (tracked via DVC, keep pointers in git)
+models/*
+!models/*.dvc
+data/preprocessed/
 
 ##########################################################
 ### down below are .gitignore settings given from template
@@ -132,9 +132,5 @@ metrics/metrics.json
 **/.DS_Store
 
 # Allow DVC pointer files even if models/ is ignored
-!models/*.dvc
 
 # --- Models: ignore artifacts, keep DVC pointers ---
-models/*
-!models/*.dvc
-/results
