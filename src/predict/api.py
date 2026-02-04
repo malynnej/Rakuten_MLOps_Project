@@ -11,12 +11,15 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from services.predict_text import PredictionService
 
+API_ROOT_PATH = "/predict"
+
 app = FastAPI(
     title="Prediction Service - Rakuten MLOps",
-    # root_path="/predict",
+    root_path=API_ROOT_PATH,
 )
 
 # Initialize prediction service at startup
@@ -50,6 +53,12 @@ class BatchTextInput(BaseModel):
     batch_size: int = 32
     return_probabilities: bool = False
     top_k: int = 5
+
+
+# Workaround to make docs available behind proxy AND locally
+@app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
+async def get_docs():
+    return RedirectResponse(url="/openapi.json")
 
 
 # Root endpoint
