@@ -13,6 +13,7 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from services.predict_text import PredictionService
+
 app = FastAPI(
     title="Prediction Service - Rakuten MLOps",
     # root_path="/predict",
@@ -60,10 +61,9 @@ async def root():
         "version": "1.0.0",
         "description": "Real-time product category prediction",
         "endpoints": {
-            "predict": "POST /predict - Predict from raw text",
-            "predict_product": "POST /predict/product - Predict from designation + description",
-            "predict_batch": "POST /predict/batch - Batch prediction",
-            "model_info": "GET /model/info - Model information",
+            "predict_text": "POST /predict_text - Predict from raw text",
+            "predict_product": "POST /predict_product - Predict from designation + description",
+            "predict_batch": "POST /predict_batch - Batch prediction",
             "health": "GET /health - Health check",
         },
         "docs": "/docs",
@@ -83,13 +83,13 @@ async def health():
     }
 
 
-@app.post("/predict/text")
+@app.post("/predict_text")
 async def predict_text(input_data: TextInput):
     """
     Predict category for single text.
 
     Example:
-        POST /predict/text
+        POST /predict_text
         {
             "text": "Nike running shoes",
             "return_probabilities": true,
@@ -110,13 +110,13 @@ async def predict_text(input_data: TextInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/predict/product")
+@app.post("/predict_product")
 async def predict_product(input_data: ProductInput):
     """
     Predict category for product with designation and description.
 
     Example:
-        POST /predict/product
+        POST /predict_product
         {
             "designation": "Nike Air Max 90",
             "description": "Classic running shoes",
@@ -138,13 +138,13 @@ async def predict_product(input_data: ProductInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/predict/batch")
+@app.post("/predict_batch")
 async def predict_batch(input_data: BatchTextInput):
     """
     Predict categories for multiple texts.
 
     Example:
-        POST /predict/batch
+        POST /predict_batch
         {
             "texts": ["Nike shoes", "Adidas jacket", "Samsung phone"],
             "batch_size": 32,
