@@ -8,13 +8,13 @@ services:
     networks: 
       - api_network
     ports:
-      - "8001:8001"
+      - "8001:8000"
     volumes:
       - ./data:/app/data              
       - ./models:/app/models          
       - ./config:/app/config:ro       
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -27,14 +27,14 @@ services:
     networks: 
       - api_network
     ports:
-      - "8002:8002"
+      - "8002:8000"
     volumes:
       - ./data:/app/data:ro           
       - ./models:/app/models          
       - ./config:/app/config:ro 
       - ./results:/app/results
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -47,14 +47,14 @@ services:
     networks: 
       - api_network
     ports:
-      - "8004:8004"
+      - "8004:8000"
     volumes:
       - ./data:/app/data:ro           
       - ./models:/app/models:ro       
       - ./results:/app/results        
       - ./config:/app/config:ro       
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 5
