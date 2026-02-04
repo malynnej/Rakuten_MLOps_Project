@@ -90,6 +90,10 @@ services:
     depends_on:
       api_predict:
         condition: service_healthy
+      api_train:
+        condition: service_healthy
+      api_evaluate:
+        condition: service_healthy
     networks: 
       - api_network
     volumes:

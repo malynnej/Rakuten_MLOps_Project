@@ -17,6 +17,7 @@ from typing import Optional
 # Set non-interactive backend BEFORE importing pyplot
 import matplotlib
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 matplotlib.use("Agg")  # Use non-interactive backend for background tasks
@@ -24,7 +25,17 @@ matplotlib.use("Agg")  # Use non-interactive backend for background tasks
 from core.config import get_path
 from services.evaluate_text import ModelEvaluator
 
-app = FastAPI(title="Rakuten ML Evaluation API")
+API_ROOT_PATH = "/evaluate"
+
+app = FastAPI(
+    title="Evaluation Service - Rakuten MLOps",
+    root_path=API_ROOT_PATH,
+)
+
+# Workaround to make docs available behind proxy AND locally
+@app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
+async def get_docs():
+    return RedirectResponse(url="/openapi.json")
 
 # Global state
 evaluator = None
@@ -84,7 +95,7 @@ async def root():
         "version": "1.0.0",
         "description": "Model evaluation and performance analysis",
         "endpoints": {
-            "evaluate": "POST /evaluate - Run model evaluation",
+            "evaluate": "POST /evaluate_model - Run model evaluation",
             "status": "GET /status - Evaluation status",
             "model_info": "GET /model/info - Model information",
             "results": "GET /results/latest - Latest evaluation results",
@@ -96,7 +107,7 @@ async def root():
 
 
 # Evaluation endpoint
-@app.post("/evaluate")
+@app.post("/evaluate_model")
 async def evaluate_model(request: EvaluateRequest, background_tasks: BackgroundTasks):
     """
     Evaluate model on test dataset.
@@ -112,7 +123,7 @@ async def evaluate_model(request: EvaluateRequest, background_tasks: BackgroundT
         Evaluation job status
 
     Example:
-        POST /evaluate
+        POST /evaluate_model
         {
             "test_path": null,
             "output_dir": "./results/evaluation",

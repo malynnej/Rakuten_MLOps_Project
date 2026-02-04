@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 import pytest
 import requests
@@ -10,6 +11,8 @@ NGINX_ADDRESS = os.environ.get("NGINX_ADDRESS", default="127.0.0.1")
 HTTPS_PORT = os.environ.get("HTTPS_PORT", default="8443")
 HTTP_PORT = os.environ.get("HTTP_PORT", default="8080")
 
+# waiting time for rate limited endpoints
+SLEEP_SECS = .5
 
 class TestHealthCheck:
     """Test class for Nginx health check endpoint"""
@@ -96,6 +99,13 @@ class TestForwardPredict:
     baseUrl = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/predict"
     auth = HTTPBasicAuth("user1", "user1")
 
+    @pytest.fixture(autouse=True, scope="class")
+    def slow_down(self):
+        """Slow down API tests to not reach request limit"""
+        yield
+        logging.info(f"Finished {self}")
+        time.sleep(SLEEP_SECS)
+
     def test_root_unauthorized(self):
         """Test response to unauthorized request"""
         expected_status_code = 401
@@ -116,6 +126,129 @@ class TestForwardPredict:
 
     def test_root_valid(self):
         """Test response on the predict/ endpoint"""
+        expected_status_code = 200
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=self.auth)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+
+class TestForwardData:
+    """Test forwarding to data API"""
+
+    baseUrl = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/data"
+    auth = HTTPBasicAuth("dev1", "dev1")
+
+    @pytest.fixture(autouse=True, scope="class")
+    def slow_down(self):
+        """Slow down API tests to not reach request limit"""
+        yield
+        logging.info(f"Finished {self}")
+        time.sleep(SLEEP_SECS)
+
+    def test_root_unauthorized(self):
+        """Test response to unauthorized request"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_invalid(self):
+        """Test response to request with invalid credentials"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=HTTPBasicAuth("user1", "user1"))
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_valid(self):
+        """Test response on the data/ endpoint"""
+        expected_status_code = 200
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=self.auth)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+
+class TestForwardTrain:
+    """Test forwarding to train API"""
+
+    baseUrl = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/train"
+    auth = HTTPBasicAuth("dev2", "dev2")
+
+    @pytest.fixture(autouse=True, scope="class")
+    def slow_down(self):
+        """Slow down API tests to not reach request limit"""
+        yield
+        logging.info(f"Finished {self}")
+        time.sleep(SLEEP_SECS)
+
+    def test_root_unauthorized(self):
+        """Test response to unauthorized request"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_invalid(self):
+        """Test response to request with invalid credentials"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=HTTPBasicAuth("dev2", "dev1"))
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_valid(self):
+        """Test response on the train/ endpoint"""
+        expected_status_code = 200
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=self.auth)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+
+class TestForwardEvaluate:
+    """Test forwarding to evaluate API"""
+
+    baseUrl = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/evaluate"
+    auth = HTTPBasicAuth("dev2", "dev2")
+
+    @pytest.fixture(autouse=True, scope="class")
+    def slow_down(self):
+        """Slow down API tests to not reach request limit"""
+        yield
+        logging.info(f"Finished {self}")
+        time.sleep(SLEEP_SECS)
+
+    def test_root_unauthorized(self):
+        """Test response to unauthorized request"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url)
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_invalid(self):
+        """Test response to request with invalid credentials"""
+        expected_status_code = 401
+        url = f"{self.baseUrl}/"
+        response = requests.get(url=url, auth=HTTPBasicAuth("dev2", "dev1"))
+        assert response.status_code == expected_status_code, (
+            f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+    def test_root_valid(self):
+        """Test response on the evaluate/ endpoint"""
         expected_status_code = 200
         url = f"{self.baseUrl}/"
         response = requests.get(url=url, auth=self.auth)

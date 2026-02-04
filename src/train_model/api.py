@@ -14,10 +14,21 @@ from datetime import datetime
 
 from core.config import get_path
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from services.train_model_text import train_bert_model
 
-app = FastAPI(title="Rakuten ML Training API")
+API_ROOT_PATH = "/train"
+
+app = FastAPI(
+    title="Training Service - Rakuten MLOps",
+    root_path=API_ROOT_PATH,
+)
+
+# Workaround to make docs available behind proxy AND locally
+@app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
+async def get_docs():
+    return RedirectResponse(url="/openapi.json")
 
 # Global state
 training_status = {
@@ -111,7 +122,7 @@ def run_training(retrain: bool, model_name: str):
 
 
 # Training endpoint
-@app.post("/train")
+@app.post("/train_model")
 async def train(request: TrainRequest, background_tasks: BackgroundTasks):
     """
     Start model training in background.
@@ -123,7 +134,7 @@ async def train(request: TrainRequest, background_tasks: BackgroundTasks):
         Training job status
 
     Example:
-        POST /train
+        POST /train_model
         {
             "retrain": false,
             "model_name": "bert-rakuten-final"
@@ -289,7 +300,7 @@ async def root():
         "version": "1.0.0",
         "description": "Background training service for BERT text classification",
         "endpoints": {
-            "train": "POST /train - Start model training",
+            "train": "POST /train_model - Start model training",
             "status": "GET /status - Get training status",
             "health": "GET /health - Health check",
             "prerequisites": "GET /prerequisites - Check training requirements",
