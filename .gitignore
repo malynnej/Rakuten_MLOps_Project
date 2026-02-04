@@ -7,15 +7,16 @@
 venv
 
 # exclude models
-/models/bert-rakuten-final
-/models/Archive
-results/
+-/models/bert-rakuten-final
+-/models/Archive
+-results/
 
-# DVC outputs (tracked via dvc.yaml)
-models/
-data/preprocessed/
-mlruns/
-mlflow.db
+#DVC
++# DVC outputs (tracked via DVC, keep pointers in git)
++models/*
++!models/*.dvc
++data/preprocessed/
+
 ##########################################################
 ### down below are .gitignore settings given from template
 ##########################################################
@@ -123,6 +124,17 @@ target/
 # OS junk
 .DS_Store
 __MACOSX/
-/results
 .dvc/config.local
 metrics/metrics.json
+
+# macOS junk
+.DS_Store
+**/.DS_Store
+
+# Allow DVC pointer files even if models/ is ignored
+!models/*.dvc
+
+# --- Models: ignore artifacts, keep DVC pointers ---
+models/*
+!models/*.dvc
+/results
