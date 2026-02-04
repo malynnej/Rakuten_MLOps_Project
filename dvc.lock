@@ -13,14 +13,14 @@ stages:
       size: 768
     - path: src/data
       hash: md5
-      md5: 08ca1ed031724d15e1f1e73487d7f69a.dir
-      size: 138162
-      nfiles: 23
+      md5: 89ac9737b7ca3a3031a6a0992a62d653.dir
+      size: 524496
+      nfiles: 27
     - path: src/data/services
       hash: md5
-      md5: f8471ee859a51259acdd67972095fcf3.dir
-      size: 107354
-      nfiles: 12
+      md5: 81c85387c7b0517921427903b8ef6281.dir
+      size: 124184
+      nfiles: 13
     outs:
     - path: data/preprocessed
       hash: md5
@@ -46,20 +46,20 @@ stages:
       nfiles: 4
     - path: src/train_model
       hash: md5
-      md5: 909be7b9d17fb00ea54d425e72bdc142.dir
-      size: 64635
-      nfiles: 12
+      md5: 6f230d652f13cd728a10f51240f0a992.dir
+      size: 536827
+      nfiles: 15
     - path: src/train_model/services
       hash: md5
-      md5: ca71bcc8dabb3cdd1c0fd119442e0324.dir
-      size: 46741
+      md5: e75382604ed6459651420716cce0d0ae.dir
+      size: 46244
       nfiles: 4
     outs:
     - path: models/bert-rakuten-final
       hash: md5
-      md5: 72933993f78739380d0f9217bcce23ab.dir
-      size: 53
-      nfiles: 1
+      md5: f5fca48c99c09294e5e40e97e2d2d6a4.dir
+      size: 1553654935
+      nfiles: 30
   evaluate:
     cmd: uv run python -m src.evaluate_model.run_evaluate --model_name 
       bert-rakuten-final
