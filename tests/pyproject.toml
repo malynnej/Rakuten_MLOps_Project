@@ -1,0 +1,11 @@
+[project]
+name = "integration-tests"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pytest>=9.0.2",
+    "requests>=2.31.0",
+    "pandas>=2.0.0",
+    "docker>=7.0.0",  # For Docker tests
+    "pytest-timeout>=2.3.1",  # For long-running tests
+]

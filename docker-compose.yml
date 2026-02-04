@@ -100,5 +100,56 @@ services:
       API_ADDRESS: predict_api
       API_PORT: 8000
 
+  test_api_data:
+    build: 
+      context: tests/test_api_data
+      args:
+        LOGDIR: /logs
+    container_name: test_api_data
+    depends_on:
+      api_predict:
+        condition: service_healthy
+    networks: 
+      - rakuten_mlops_network
+    volumes:
+      - ./logs:/logs
+    environment:
+      API_ADDRESS: data_api
+      API_PORT: 8001
+
+  test_api_train:
+    build: 
+      context: tests/test_api_train
+      args:
+        LOGDIR: /logs
+    container_name: test_api_train
+    depends_on:
+      api_predict:
+        condition: service_healthy
+    networks: 
+      - rakuten_mlops_network
+    volumes:
+      - ./logs:/logs
+    environment:
+      API_ADDRESS: train_api
+      API_PORT: 8002
+
+  test_api_evaluate:
+    build: 
+      context: tests/test_api_evaluate
+      args:
+        LOGDIR: /logs
+    container_name: test_api_evaluate
+    depends_on:
+      api_predict:
+        condition: service_healthy
+    networks: 
+      - rakuten_mlops_network
+    volumes:
+      - ./logs:/logs
+    environment:
+      API_ADDRESS: evaluate_api
+      API_PORT: 8004
+
 networks:
   rakuten_mlops_network:

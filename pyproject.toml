@@ -59,6 +59,10 @@ members = [
   "src/evaluate_model",
   "src/data",
   "tests/test_api_predict",
+  "tests/test_api_data",
+  "tests/test_api_evaluate",
+  "tests/test_api_train",
+  "tests/integration",
 ]
 
 
