@@ -12,7 +12,8 @@ HTTPS_PORT = os.environ.get("HTTPS_PORT", default="8443")
 HTTP_PORT = os.environ.get("HTTP_PORT", default="8080")
 
 # waiting time for rate limited endpoints
-SLEEP_SECS = .5
+SLEEP_SECS = 0.5
+
 
 class TestHealthCheck:
     """Test class for Nginx health check endpoint"""

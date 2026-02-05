@@ -26,10 +26,12 @@ app = FastAPI(
     root_path=API_ROOT_PATH,
 )
 
+
 # Workaround to make docs available behind proxy AND locally
 @app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
 async def get_docs():
     return RedirectResponse(url="/openapi.json")
+
 
 # ============================================ GLOBAL STATE
 # ============================================
