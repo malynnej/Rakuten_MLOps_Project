@@ -1,5 +1,5 @@
 [core]
     remote = origin
 
-['remote "origin"']
+[remote "origin"]
     url = https://dagshub.com/jenny-lam/Rakuten_MLOps_Project.dvc

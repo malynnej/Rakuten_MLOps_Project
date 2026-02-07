@@ -1,10 +1,78 @@
 services:
 
+  mlflow_smoke:
+    image: python:3.11-slim
+    working_dir: /app
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q mlflow && python scripts/mlflow_smoke.py"
+    networks:
+      - api_network
+
+  mlflow:
+    image: python:3.11-slim
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    command:
+      - sh
+      - -lc
+      - |
+        set -eux
+        pip install -q mlflow
+        mkdir -p /mlflow/artifacts
+        mlflow server \
+          --host 0.0.0.0 \
+          --port 5000 \
+          --backend-store-uri sqlite:////mlflow/mlflow.db \
+          --default-artifact-root /mlflow/artifacts \
+          --allowed-hosts '*' \
+          --cors-allowed-origins '*'
+    networks:
+      - api_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=2).read(10)"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+
+
+
+  dvc_init:
+    image: python:3.11-slim
+    container_name: dvc_init
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    working_dir: /app
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q dvc dvc-http && sh scripts/dvc_pull_if_needed.sh"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /tmp/dvc_done"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    networks:
+      - api_network
+
+
   api_data:
     build:
       context: src/data
       dockerfile: Dockerfile
     container_name: data_api
+    depends_on:
+      dvc_init:
+        condition: service_healthy
     networks: 
       - api_network
     ports:
@@ -24,6 +92,9 @@ services:
       context: src/train_model
       dockerfile: Dockerfile
     container_name: train_api
+    depends_on:
+      dvc_init:
+        condition: service_healthy
     networks: 
       - api_network
     ports:
@@ -43,7 +114,9 @@ services:
     build:
       context: src/evaluate_model
       dockerfile: Dockerfile
-    container_name: evaluate_api
+    depends_on:
+      dvc_init:
+        condition: service_healthy
     networks: 
       - api_network
     ports:
@@ -110,6 +183,7 @@ services:
     ports:
       - "8080:8080"
       - "8443:8443"
+      - "5001:5001"
     networks: 
       - api_network
       - edge_network
