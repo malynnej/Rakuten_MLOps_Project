@@ -45,29 +45,33 @@ def main():
     with mlflow.start_run(run_name=run_name) as run:
         print(f"\n✓ Started MLflow Run: {run.info.run_id}\n")
 
-        mlflow.set_tags({
-            "service": "train_api",
-            "run_type": "train",
-            "timestamp_utc": ts_utc,
-            "git_sha": git_sha,
-            "git_branch": git_branch,
-            "model_name": model_name,
-            "wrapper_version": "1.0",
-        })
+        mlflow.set_tags(
+            {
+                "service": "train_api",
+                "run_type": "train",
+                "timestamp_utc": ts_utc,
+                "git_sha": git_sha,
+                "git_branch": git_branch,
+                "model_name": model_name,
+                "wrapper_version": "1.0",
+            }
+        )
         print("✓ Tags logged")
 
-        mlflow.log_params({
-            "num_train_epochs": train_params["num_train_epochs"],
-            "batch_size": train_params["per_device_train_batch_size"],
-            "learning_rate": train_params["learning_rate"],
-            "weight_decay": train_params["weight_decay"],
-            "warmup_ratio": train_params["warmup_ratio"],
-            "llrd_enabled": train_params["llrd"]["enabled"],
-            "llrd_decay_factor": train_params["llrd"]["lr_decay_factor"],
-            "freeze_embeddings": train_params["freeze_embeddings"],
-            "early_stopping_patience": train_params["early_stopping"]["patience"],
-            "fp16": train_params["fp16"],
-        })
+        mlflow.log_params(
+            {
+                "num_train_epochs": train_params["num_train_epochs"],
+                "batch_size": train_params["per_device_train_batch_size"],
+                "learning_rate": train_params["learning_rate"],
+                "weight_decay": train_params["weight_decay"],
+                "warmup_ratio": train_params["warmup_ratio"],
+                "llrd_enabled": train_params["llrd"]["enabled"],
+                "llrd_decay_factor": train_params["llrd"]["lr_decay_factor"],
+                "freeze_embeddings": train_params["freeze_embeddings"],
+                "early_stopping_patience": train_params["early_stopping"]["patience"],
+                "fp16": train_params["fp16"],
+            }
+        )
         print("✓ Parameters logged")
 
         print("\n" + "=" * 60)

@@ -26,12 +26,12 @@ def get_or_create_experiment(uri: str, auth: tuple[str, str], name: str) -> str:
         timeout=20,
     )
     r.raise_for_status()
-    
+
     # Check if experiment exists
     for exp in r.json().get("experiments", []):
         if exp["name"] == name:
             return exp["experiment_id"]
-    
+
     # If not found, try to create it
     r2 = requests.post(
         _api(uri, "/api/2.0/mlflow/experiments/create"),
@@ -39,7 +39,7 @@ def get_or_create_experiment(uri: str, auth: tuple[str, str], name: str) -> str:
         auth=auth,
         timeout=20,
     )
-    
+
     # Handle the case where experiment already exists (race condition)
     if r2.status_code == 400:
         resp_json = r2.json()
@@ -55,7 +55,7 @@ def get_or_create_experiment(uri: str, auth: tuple[str, str], name: str) -> str:
             for exp in r3.json().get("experiments", []):
                 if exp["name"] == name:
                     return exp["experiment_id"]
-    
+
     r2.raise_for_status()
     return r2.json()["experiment_id"]
 
@@ -65,17 +65,17 @@ def main() -> None:
     user = os.environ["MLFLOW_TRACKING_USERNAME"]
     token = os.environ["MLFLOW_TRACKING_PASSWORD"]
     auth = (user, token)
-    
+
     exp_name = os.getenv("MLFLOW_EXPERIMENT_NAME", "rakuten-smoke")
     git_sha = os.getenv("GIT_SHA", "unknown")
     git_branch = os.getenv("GIT_BRANCH", "unknown")
     service = os.getenv("SERVICE_NAME", "mlflow_smoke_dagshub")
     run_type = os.getenv("RUN_TYPE", "smoke")
     ts_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    
+
     start_ms = _now_ms()
     exp_id = get_or_create_experiment(tracking_uri, auth, exp_name)
-    
+
     run_name = f"smoke-{ts_utc}"
     tags = [
         {"key": "mlflow.runName", "value": run_name},
@@ -85,7 +85,7 @@ def main() -> None:
         {"key": "git_sha", "value": git_sha},
         {"key": "git_branch", "value": git_branch},
     ]
-    
+
     r = requests.post(
         _api(tracking_uri, "/api/2.0/mlflow/runs/create"),
         json={"experiment_id": exp_id, "start_time": start_ms, "tags": tags},
@@ -94,28 +94,28 @@ def main() -> None:
     )
     r.raise_for_status()
     run_id = r.json()["run"]["info"]["run_id"]
-    
+
     requests.post(
         _api(tracking_uri, "/api/2.0/mlflow/runs/log-metric"),
         json={"run_id": run_id, "key": "smoke_ok", "value": 1.0, "timestamp": _now_ms(), "step": 0},
         auth=auth,
         timeout=20,
     ).raise_for_status()
-    
+
     requests.post(
         _api(tracking_uri, "/api/2.0/mlflow/runs/log-parameter"),
         json={"run_id": run_id, "key": "tracking_uri", "value": _base_uri(tracking_uri)},
         auth=auth,
         timeout=20,
     ).raise_for_status()
-    
+
     requests.post(
         _api(tracking_uri, "/api/2.0/mlflow/runs/update"),
         json={"run_id": run_id, "status": "FINISHED", "end_time": _now_ms()},
         auth=auth,
         timeout=20,
     ).raise_for_status()
-    
+
     print(f"OK: logged DAGsHub smoke run: {run_name}")
     print(f"Run: {_base_uri(tracking_uri)}/#/experiments/{exp_id}/runs/{run_id}")
 
