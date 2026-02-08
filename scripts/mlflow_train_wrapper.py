@@ -6,11 +6,10 @@ Wraps the existing train service without modifying it.
 """
 
 import os
-import sys
-import json
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -21,7 +20,7 @@ def main():
     print("=" * 60 + "\n")
 
     import mlflow
-    from src.train_model.core.config import load_config, get_path
+    from src.train_model.core.config import get_path, load_config
 
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
     mlflow.set_tracking_uri(tracking_uri)

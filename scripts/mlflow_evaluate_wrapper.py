@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import os
-import sys
 import json
+import os
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -17,7 +17,7 @@ def main():
     print("=" * 60 + "\n")
 
     import mlflow
-    from src.evaluate_model.core.config import load_config, get_path
+    from src.evaluate_model.core.config import get_path, load_config
 
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
     mlflow.set_tracking_uri(tracking_uri)
@@ -44,15 +44,17 @@ def main():
         print(f"\n✓ Started MLflow Run: {run.info.run_id}\n")
 
         # Set tags
-        mlflow.set_tags({
-            "service": "evaluate_api",
-            "run_type": "evaluate",
-            "timestamp_utc": ts_utc,
-            "git_sha": git_sha,
-            "git_branch": git_branch,
-            "model_name": model_name,
-            "wrapper_version": "1.0",
-        })
+        mlflow.set_tags(
+            {
+                "service": "evaluate_api",
+                "run_type": "evaluate",
+                "timestamp_utc": ts_utc,
+                "git_sha": git_sha,
+                "git_branch": git_branch,
+                "model_name": model_name,
+                "wrapper_version": "1.0",
+            }
+        )
         print("✓ Tags logged")
 
         print("\n" + "=" * 60)
@@ -76,21 +78,21 @@ def main():
 
         if metrics_file.exists():
             print(f"\n✓ Reading metrics from: {metrics_file}")
-            
+
             with open(metrics_file, "r") as f:
                 metrics = json.load(f)
-            
+
             for key, value in metrics.items():
                 if isinstance(value, (int, float)) and key != "note":
                     mlflow.log_metric(key, value)
                     print(f"  ✓ {key}: {value}")
-            
+
             print("✓ All metrics logged to MLflow")
         else:
             print(f"\n⚠ Warning: Metrics file not found at {metrics_file}")
 
         results_dir = get_path("results.evaluation")
-        
+
         artifact_patterns = [
             "confusion_matrix.png",
             "classification_report.txt",
@@ -109,11 +111,15 @@ def main():
         print(f"Run ID: {run.info.run_id}")
         print(f"Experiment: {experiment_name}")
         print(f"Tracking URI: {tracking_uri}")
-        
+
         if tracking_uri.startswith("http://mlflow"):
-            print(f"View: {tracking_uri}/#/experiments/{run.info.experiment_id}/runs/{run.info.run_id}")
+            exp_id = run.info.experiment_id
+            run_id = run.info.run_id
+            print(f"View: {tracking_uri}/#/experiments/{exp_id}/runs/{run_id}")
         else:
-            print(f"View: {tracking_uri}/#/experiments/{run.info.experiment_id}/runs/{run.info.run_id}")
+            exp_id = run.info.experiment_id
+            run_id = run.info.run_id
+            print(f"View: {tracking_uri}/#/experiments/{exp_id}/runs/{run_id}")
 
 
 if __name__ == "__main__":
