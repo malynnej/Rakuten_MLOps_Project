@@ -41,7 +41,7 @@ services:
       - api_network
 
   mlflow_train_wrapper:
-    image: python:3.11-slim
+    image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     working_dir: /app
     env_file:
       - .env
@@ -57,18 +57,28 @@ services:
       SERVICE_NAME: mlflow_train_wrapper
       RUN_TYPE: train
       GIT_PYTHON_REFRESH: quiet
+      UV_CACHE_DIR: /tmp/uv-cache
     volumes:
       - ./:/app
+      - uv_cache:/tmp/uv-cache
     command: >
-      sh -c "pip install -q mlflow requests pyyaml && python scripts/mlflow_train_wrapper.py"
+      sh -lc "set -eux;
+        uv venv /app/venv --clear;
+        uv pip install -q --python /app/venv/bin/python mlflow requests pyyaml;
+        if [ \"${DVC_FAST_TRAIN:-0}\" != \"1\" ]; then
+          uv pip install -q --python /app/venv/bin/python --extra-index-url https://download.pytorch.org/whl/cpu torch datasets transformers accelerate numpy pandas scikit-learn;
+        fi;
+        /app/venv/bin/python scripts/mlflow_train_wrapper.py
+      "
     networks:
       - api_network
     depends_on:
       dvc_init:
         condition: service_healthy
 
+
   mlflow_evaluate_wrapper:
-    image: python:3.11-slim
+    image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     working_dir: /app
     env_file:
       - .env
@@ -83,15 +93,24 @@ services:
       SERVICE_NAME: mlflow_evaluate_wrapper
       RUN_TYPE: evaluate
       GIT_PYTHON_REFRESH: quiet
+      UV_CACHE_DIR: /tmp/uv-cache
     volumes:
       - ./:/app
+      - uv_cache:/tmp/uv-cache
     command: >
-      sh -c "pip install -q mlflow requests pyyaml && python scripts/mlflow_evaluate_wrapper.py"
+      sh -lc "set -eux;
+        uv venv /app/venv --clear;
+        uv pip install -q --python /app/venv/bin/python mlflow requests pyyaml --extra-index-url https://download.pytorch.org/whl/cpu torch seaborn matplotlib numpy pandas scikit-learn;
+        /app/venv/bin/python scripts/mlflow_evaluate_wrapper.py
+      "
     networks:
       - api_network
     depends_on:
       dvc_init:
         condition: service_healthy
+
+
+
 
   mlflow:
     image: python:3.11-slim
@@ -294,3 +313,6 @@ services:
 networks:
   api_network:
   edge_network:
+
+volumes:
+  uv_cache:

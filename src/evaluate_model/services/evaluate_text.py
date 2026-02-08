@@ -8,6 +8,7 @@ Data Service.
 """
 
 # Set non-interactive backend BEFORE importing pyplot
+import os
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -141,6 +142,12 @@ class ModelEvaluator:
 
         # Load parquet
         test_df = pd.read_parquet(test_path)
+
+        limit = int(os.getenv("EVAL_MAX_SAMPLES", "0"))
+        if limit > 0:
+        test_df = test_df.head(limit)
+        print(f"Limiting evaluation to first {limit} samples (EVAL_MAX_SAMPLES)")
+
 
         print(f"\n✓ Loaded test data: {len(test_df):,} samples")
         print(f"  Columns: {list(test_df.columns)}")
