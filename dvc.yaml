@@ -10,7 +10,14 @@ stages:
       - data/preprocessed
 
   train:
-    cmd: uv run python -m src.train_model.run_train --model_name bert-rakuten-final
+    cmd: >
+      bash -c '
+      if [ "$ENABLE_MLFLOW" = "1" ]; then
+        python scripts/mlflow_train_wrapper.py
+      else
+        uv run python -m src.train_model.run_train --model_name bert-rakuten-final
+      fi
+      '
     deps:
       - src/train_model
       - src/train_model/services
@@ -19,9 +26,18 @@ stages:
       - config/paths.yaml
     outs:
       - models/bert-rakuten-final
+    params:
+      - training
 
   evaluate:
-    cmd: uv run python -m src.evaluate_model.run_evaluate --model_name bert-rakuten-final
+    cmd: >
+      bash -c '
+      if [ "$ENABLE_MLFLOW" = "1" ]; then
+        python scripts/mlflow_evaluate_wrapper.py
+      else
+        uv run python -m src.evaluate_model.run_evaluate --model_name bert-rakuten-final
+      fi
+      '
     deps:
       - src/evaluate_model
       - src/evaluate_model/services
@@ -30,4 +46,5 @@ stages:
       - config/params.yaml
       - config/paths.yaml
     metrics:
-      - metrics/metrics.json
+      - metrics/metrics.json:
+          cache: false

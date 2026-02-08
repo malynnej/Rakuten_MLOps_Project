@@ -5,12 +5,93 @@ services:
     working_dir: /app
     env_file:
       - .env
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME:-rakuten-smoke}
+      SERVICE_NAME: mlflow_smoke
+      RUN_TYPE: smoke
+      GIT_PYTHON_REFRESH: quiet
     volumes:
       - ./:/app
     command: >
-      sh -c "pip install -q mlflow && python scripts/mlflow_smoke.py"
+      sh -c "pip install -q 'mlflow<3' && python scripts/mlflow_smoke.py"
     networks:
       - api_network
+
+  mlflow_smoke_dagshub:
+    image: python:3.11-slim
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      MLFLOW_TRACKING_URI: https://dagshub.com/jenny-lam/Rakuten_MLOps_Project.mlflow
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+      MLFLOW_EXPERIMENT_NAME: rakuten-smoke
+      SERVICE_NAME: mlflow_smoke
+      RUN_TYPE: smoke
+      GIT_PYTHON_REFRESH: quiet
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q requests && python scripts/mlflow_smoke_rest.py"
+    networks:
+      - api_network
+
+  mlflow_train_wrapper:
+    image: python:3.11-slim
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+      MLFLOW_EXPERIMENT_NAME: rakuten-training
+      GIT_SHA: ${GIT_SHA:-unknown}
+      GIT_BRANCH: ${GIT_BRANCH:-unknown}
+      MLFLOW_LOG_MODEL: ${MLFLOW_LOG_MODEL:-false}
+      DVC_FAST_TRAIN: ${DVC_FAST_TRAIN:-0}
+      SERVICE_NAME: mlflow_train_wrapper
+      RUN_TYPE: train
+      GIT_PYTHON_REFRESH: quiet
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q mlflow requests pyyaml && python scripts/mlflow_train_wrapper.py"
+    networks:
+      - api_network
+    depends_on:
+      dvc_init:
+        condition: service_healthy
+
+  mlflow_evaluate_wrapper:
+    image: python:3.11-slim
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
+      MLFLOW_EXPERIMENT_NAME: rakuten-evaluation
+      GIT_SHA: ${GIT_SHA:-unknown}
+      GIT_BRANCH: ${GIT_BRANCH:-unknown}
+      DVC_FAST_EVAL: ${DVC_FAST_EVAL:-0}
+      SERVICE_NAME: mlflow_evaluate_wrapper
+      RUN_TYPE: evaluate
+      GIT_PYTHON_REFRESH: quiet
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q mlflow requests pyyaml && python scripts/mlflow_evaluate_wrapper.py"
+    networks:
+      - api_network
+    depends_on:
+      dvc_init:
+        condition: service_healthy
 
   mlflow:
     image: python:3.11-slim
@@ -41,14 +122,9 @@ services:
       timeout: 2s
       retries: 40
 
-
-
   dvc_init:
     image: python:3.11-slim
     container_name: dvc_init
-    depends_on:
-      mlflow:
-        condition: service_healthy
     working_dir: /app
     env_file:
       - .env
@@ -64,7 +140,6 @@ services:
     networks:
       - api_network
 
-
   api_data:
     build:
       context: src/data
@@ -73,14 +148,14 @@ services:
     depends_on:
       dvc_init:
         condition: service_healthy
-    networks: 
+    networks:
       - api_network
     ports:
       - "8001:8000"
     volumes:
-      - ./data:/app/data              
-      - ./models:/app/models          
-      - ./config:/app/config:ro       
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -95,14 +170,14 @@ services:
     depends_on:
       dvc_init:
         condition: service_healthy
-    networks: 
+    networks:
       - api_network
     ports:
       - "8002:8000"
     volumes:
-      - ./data:/app/data:ro           
-      - ./models:/app/models          
-      - ./config:/app/config:ro 
+      - ./data:/app/data:ro
+      - ./models:/app/models
+      - ./config:/app/config:ro
       - ./results:/app/results
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -117,15 +192,15 @@ services:
     depends_on:
       dvc_init:
         condition: service_healthy
-    networks: 
+    networks:
       - api_network
     ports:
       - "8004:8000"
     volumes:
-      - ./data:/app/data:ro           
-      - ./models:/app/models:ro       
-      - ./results:/app/results        
-      - ./config:/app/config:ro       
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./results:/app/results
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -141,10 +216,10 @@ services:
     deploy:
       replicas: 1
     container_name: predict_api
-    networks: 
+    networks:
       - api_network
     ports:
-      - "8000:8000" # TODO: remove port mapping (visibility from host) for production
+      - "8000:8000"
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -155,7 +230,7 @@ services:
       retries: 12
 
   test_api_predict:
-    build: 
+    build:
       context: tests/test_api_predict
       args:
         LOGDIR: /logs
@@ -167,7 +242,7 @@ services:
         condition: service_healthy
       api_evaluate:
         condition: service_healthy
-    networks: 
+    networks:
       - api_network
     volumes:
       - ./logs:/logs
@@ -184,7 +259,7 @@ services:
       - "8080:8080"
       - "8443:8443"
       - "5001:5001"
-    networks: 
+    networks:
       - api_network
       - edge_network
     depends_on:
@@ -195,7 +270,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 3
-  
+
   test_nginx:
     build:
       context: tests/test_nginx
@@ -218,7 +293,4 @@ services:
 
 networks:
   api_network:
-    # internal network not exposed to host
-    # internal: true
   edge_network:
-    # network exposed to host for reverse proxy

@@ -1,0 +1,112 @@
+name: MLflow & Docker CI
+
+on:
+  push:
+    branches: [ main, jwi_dvc_dagshub_containers ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  mlflow-smoke-test:
+    name: MLflow Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install mlflow requests pyyaml
+      
+      - name: Start MLflow Server
+        run: |
+          mkdir -p mlflow/artifacts
+          mlflow server \
+            --host 127.0.0.1 \
+            --port 5000 \
+            --backend-store-uri sqlite:///mlflow/mlflow.db \
+            --default-artifact-root ./mlflow/artifacts &
+          sleep 10
+      
+      - name: Run MLflow Smoke Test
+        env:
+          MLFLOW_TRACKING_URI: http://127.0.0.1:5000
+          MLFLOW_EXPERIMENT_NAME: ci-smoke-test
+        run: python scripts/mlflow_smoke.py
+      
+      - name: Verify MLflow Experiments
+        run: |
+          curl -f http://127.0.0.1:5000/api/2.0/mlflow/experiments/list
+
+  docker-compose-validation:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate docker-compose.yml
+        run: docker compose config > /dev/null
+      
+      - name: Check critical services
+        run: |
+          docker compose config --services | grep -q "mlflow"
+          docker compose config --services | grep -q "dvc_init"
+          docker compose config --services | grep -q "mlflow_train_wrapper"
+          docker compose config --services | grep -q "mlflow_evaluate_wrapper"
+
+  dvc-pipeline-check:
+    name: DVC Pipeline Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install DVC
+        run: pip install dvc
+      
+      - name: Validate dvc.yaml
+        run: dvc dag
+      
+      - name: Check pipeline stages
+        run: |
+          dvc dag | grep -q "preprocess"
+          dvc dag | grep -q "train"
+          dvc dag | grep -q "evaluate"
+      
+      - name: Check ENABLE_MLFLOW support
+        run: |
+          grep -q "ENABLE_MLFLOW" dvc.yaml
+
+  mlflow-wrappers-test:
+    name: MLflow Wrappers Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Check wrapper scripts exist
+        run: |
+          test -f scripts/mlflow_train_wrapper.py
+          test -f scripts/mlflow_evaluate_wrapper.py
+          test -f scripts/mlflow_smoke.py
+      
+      - name: Validate wrapper syntax
+        run: |
+          python -m py_compile scripts/mlflow_train_wrapper.py
+          python -m py_compile scripts/mlflow_evaluate_wrapper.py
+          python -m py_compile scripts/mlflow_smoke.py
