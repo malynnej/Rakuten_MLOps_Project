@@ -150,6 +150,7 @@ services:
       - ./deployments/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--web.external-url=/prometheus/"
     ports:
       - "9090:9090"
     networks:
@@ -174,7 +175,7 @@ networks:
   edge_network:
     # network exposed to host for reverse proxy
   monitoring_network:
-    internal: true
+    # internal: true
     ipam:
       config:
         - subnet: 172.30.0.0/24
