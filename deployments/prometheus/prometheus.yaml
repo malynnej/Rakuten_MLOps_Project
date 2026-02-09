@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # - job_name: "fastapi"
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - api_a:8000
+  #         - api_b:8000
+  #       labels:
+  #         service_type: "api"
+
+  - job_name: "nginx"
+    metrics_path: /stub_status
+    static_configs:
+      - targets:
+          - nginx_reverse_proxy:8080
+        labels:
+          service_type: "proxy"
