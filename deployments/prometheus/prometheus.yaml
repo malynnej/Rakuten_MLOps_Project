@@ -12,10 +12,7 @@ scrape_configs:
   #       labels:
   #         service_type: "api"
 
-  - job_name: "nginx"
-    metrics_path: /stub_status
+  - job_name: "nginx_exporter"
     static_configs:
       - targets:
-          - nginx_reverse_proxy:8080
-        labels:
-          service_type: "proxy"
+          - nginx-exporter:9113

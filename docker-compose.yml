@@ -123,6 +123,15 @@ services:
       timeout: 2s
       retries: 3
   
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter
+    ports:
+      - "9113:9113"  # Exporter default port
+    command:
+      - "--nginx.scrape-uri=http://nginx_reverse_proxy:8080/nginx_status"
+    networks:
+      - monitoring_network
+
   test_nginx:
     build:
       context: tests/test_nginx
@@ -161,6 +170,8 @@ services:
     container_name: grafana
     volumes:
       - ./deployments/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./deployments/grafana/provisioning:/etc/grafana/provisioning
     ports:
       - "3000:3000"
     depends_on:
