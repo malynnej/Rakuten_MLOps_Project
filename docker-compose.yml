@@ -41,6 +41,7 @@ services:
       - api_network
 
   mlflow_train_wrapper:
+    profiles: ["on-demand"]
     image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     working_dir: /app
     env_file:
@@ -78,6 +79,7 @@ services:
 
 
   mlflow_evaluate_wrapper:
+    profiles: ["on-demand"]
     image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
     working_dir: /app
     env_file:
