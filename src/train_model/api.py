@@ -91,6 +91,7 @@ def run_training(retrain: bool, model_name: str):
             "mode": metadata.get("mode"),
             "base_model": metadata.get("base_model"),
             "model_path": str(get_path("models.save_dir") / model_name),
+            "mlflow_run_id": metadata.get("mlflow_run_id"),
         }
 
         print("\n Background training completed successfully!")

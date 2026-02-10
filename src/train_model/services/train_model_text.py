@@ -11,12 +11,17 @@ import json
 import os
 import pickle
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
+
+import mlflow
+from core.config import get_mlflow_experiment_name, get_mlflow_tracking_uri
+
+
 from core.config import get_path, load_config
 from datasets import Dataset, DatasetDict
 from transformers import (
@@ -47,6 +52,20 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print(f"\n{'=' * 60}")
     print(f"{'RETRAINING' if retrain else 'INITIAL TRAINING'} MODE")
     print(f"{'=' * 60}\n")
+
+
+    # =========================================================
+    # MLFLOW SETUP (Train-API integration)
+    # =========================================================
+    mlflow.set_tracking_uri(get_mlflow_tracking_uri())
+    mlflow.set_experiment(get_mlflow_experiment_name())
+
+    git_sha = os.getenv("GIT_SHA", "unknown")
+    git_branch = os.getenv("GIT_BRANCH", "unknown")
+
+    run_name = f"train_{model_name}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+
+
 
     # Load configuration
     params = load_config("params")
@@ -434,104 +453,175 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print("STARTING TRAINING")
     print(f"{'=' * 60}\n")
 
-    start_time = datetime.now()
 
-    # Train model
-    train_result = trainer.train()
+    # =========================================================
+    # MLFLOW RUN WRAPPER
+    # =========================================================
+    with mlflow.start_run(run_name=run_name) as run:
+        mlflow_run_id = run.info.run_id
 
-    end_time = datetime.now()
-    training_duration = end_time - start_time
+        # Tags 
+        mlflow.set_tag("status", "running")
+        mlflow.set_tag("component", "train_api")
+        mlflow.set_tag("git_sha", git_sha)
+        mlflow.set_tag("git_branch", git_branch)
+        mlflow.set_tag("mode", "retrain" if retrain else "initial")
 
-    print(f"\n{'=' * 60}")
-    print("TRAINING COMPLETE")
-    print(f"{'=' * 60}\n")
-    print(f"Training duration: {training_duration}")
-    print(f"Final training loss: {train_result.training_loss:.4f}")
+        # Params 
+        mlflow.log_param("model_name", model_name)
+        mlflow.log_param("retrain", retrain)
+        mlflow.log_param("batch_size", training_args.per_device_train_batch_size)
+        mlflow.log_param("epochs", training_args.num_train_epochs)
+        mlflow.log_param("weight_decay", training_args.weight_decay)
+        mlflow.log_param("warmup_ratio", training_args.warmup_ratio)
+        mlflow.log_param("fp16", training_args.fp16)
+        mlflow.log_param("device", str(device))
 
-    ################################################
-    ### EVALUATION ON TEST SET
-    ################################################
+        try:
+            ################################################
+            ### TRAINING
+            ################################################
 
-    print(f"\n{'=' * 60}")
-    print("EVALUATING ON TEST SET")
-    print(f"{'=' * 60}\n")
+            print(f"\n{'=' * 60}")
+            print("STARTING TRAINING")
+            print(f"{'=' * 60}\n")
 
-    test_metrics = trainer.evaluate(dataset["test"])
+            start_time = datetime.now(timezone.utc)
 
-    print("Test Results:")
-    print(f"  Accuracy: {test_metrics['eval_accuracy']:.4f}")
-    print(f"  Loss:     {test_metrics['eval_loss']:.4f}")
+            # Train model
+            train_result = trainer.train()
 
-    ################################################
-    ### SAVE MODEL AND ARTIFACTS
-    ################################################
+            end_time = datetime.now(timezone.utc)
+            training_duration = end_time - start_time
 
-    print(f"\n{'=' * 60}")
-    print("SAVING MODEL")
-    print(f"{'=' * 60}\n")
+            mlflow.log_metric("train_loss_final", float(train_result.training_loss))
+            mlflow.log_metric(
+                "training_duration_seconds", float(training_duration.total_seconds())
+            )
 
-    # Save model
-    trainer.save_model(str(model_path))
-    print(f"✓ Model saved to: {model_path}")
+            print(f"\n{'=' * 60}")
+            print("TRAINING COMPLETE")
+            print(f"{'=' * 60}\n")
+            print(f"Training duration: {training_duration}")
+            print(f"Final training loss: {train_result.training_loss:.4f}")
 
-    # Delete checkpoints
-    for checkpoint in Path(model_path).glob("checkpoints/checkpoint-*"):
-        print(f"Deleting {checkpoint.name}")
-        shutil.rmtree(checkpoint)
+            ################################################
+            ### EVALUATION ON TEST SET
+            ################################################
 
-    # Save training metadata
-    metadata = {
-        "training_date": datetime.now().isoformat(),
-        "mode": "retrain" if retrain else "initial",
-        "num_labels": num_labels,
-        "trainable_params": trainable_params,
-        "total_params": total_params,
-        "train_samples": len(dataset["train"]),
-        "val_samples": len(dataset["val"]),
-        "test_samples": len(dataset["test"]),
-        "training_duration_seconds": training_duration.total_seconds(),
-        "final_train_loss": float(train_result.training_loss),
-        "test_accuracy": float(test_metrics["eval_accuracy"]),
-        "test_loss": float(test_metrics["eval_loss"]),
-        "device": str(device),
-        "base_model": bert_model,
-        "max_length": params["preprocessing"]["max_length"],
-    }
+            print(f"\n{'=' * 60}")
+            print("EVALUATING ON TEST SET")
+            print(f"{'=' * 60}\n")
 
-    metadata_path = model_path / "training_metadata.json"
-    with open(metadata_path, "w") as f:
-        json.dump(metadata, f, indent=2)
-    print(f" Training metadata saved to: {metadata_path}")
+            test_metrics = trainer.evaluate(dataset["test"])
 
-    # Save training/validation comparison
-    comparison = {
-        "train_val_comparison": {
-            "train_loss": float(train_result.training_loss),
-            "val_accuracy": float(test_metrics["eval_accuracy"]),
-            "val_loss": float(test_metrics["eval_loss"]),
-        }
-    }
+            # Log evaluation metrics
+            for k, v in test_metrics.items():
+                try:
+                    mlflow.log_metric(k.replace("eval_", "test_"), float(v))
+                except Exception:
+                    pass
 
-    evaluation_dir = get_path("results.evaluation") / model_name
-    comparison_path = evaluation_dir / "train_val_comparison.json"
-    with open(comparison_path, "w") as f:
-        json.dump(comparison, f, indent=2)
-    print(f" Train/val comparison saved to: {comparison_path}")
+            print("Test Results:")
+            print(f"  Accuracy: {test_metrics['eval_accuracy']:.4f}")
+            print(f"  Loss:     {test_metrics['eval_loss']:.4f}")
 
-    # Summary
-    print(f"\n{'=' * 60}")
-    print("TRAINING SUMMARY")
-    print(f"{'=' * 60}\n")
-    print(f"Model:           {model_name}")
-    print(f"Mode:            {'Retraining' if retrain else 'Initial training'}")
-    print(f"Duration:        {training_duration}")
-    print(f"Device:          {device}")
-    print(f"Train loss:      {train_result.training_loss:.4f}")
-    print(f"Test accuracy:   {test_metrics['eval_accuracy']:.4f}")
-    print(f"Test loss:       {test_metrics['eval_loss']:.4f}")
-    print(f"Saved to:        {model_path}")
+            ################################################
+            ### SAVE MODEL AND ARTIFACTS
+            ################################################
 
-    return trainer, metadata
+            print(f"\n{'=' * 60}")
+            print("SAVING MODEL")
+            print(f"{'=' * 60}\n")
+
+            # Save model
+            trainer.save_model(str(model_path))
+            print(f"✓ Model saved to: {model_path}")
+
+            # Delete checkpoints
+            for checkpoint in Path(model_path).glob("checkpoints/checkpoint-*"):
+                print(f"Deleting {checkpoint.name}")
+                shutil.rmtree(checkpoint)
+
+            # Save training metadata
+            metadata = {
+                "training_date": datetime.now(timezone.utc).isoformat(),
+                "mode": "retrain" if retrain else "initial",
+                "num_labels": num_labels,
+                "trainable_params": trainable_params,
+                "total_params": total_params,
+                "train_samples": len(dataset["train"]),
+                "val_samples": len(dataset["val"]),
+                "test_samples": len(dataset["test"]),
+                "training_duration_seconds": training_duration.total_seconds(),
+                "final_train_loss": float(train_result.training_loss),
+                "test_accuracy": float(test_metrics["eval_accuracy"]),
+                "test_loss": float(test_metrics["eval_loss"]),
+                "device": str(device),
+                "base_model": bert_model,
+                "max_length": params["preprocessing"]["max_length"],
+                "mlflow_run_id": mlflow_run_id,
+                "mlflow_experiment": get_mlflow_experiment_name(),
+            }
+
+            metadata_path = model_path / "training_metadata.json"
+            with open(metadata_path, "w") as f:
+                json.dump(metadata, f, indent=2)
+            print(f" Training metadata saved to: {metadata_path}")
+
+            # Save training/validation comparison
+            comparison = {
+                "train_val_comparison": {
+                    "train_loss": float(train_result.training_loss),
+                    "val_accuracy": float(test_metrics["eval_accuracy"]),
+                    "val_loss": float(test_metrics["eval_loss"]),
+                }
+            }
+
+            evaluation_dir = get_path("results.evaluation") / model_name
+            comparison_path = evaluation_dir / "train_val_comparison.json"
+            with open(comparison_path, "w") as f:
+                json.dump(comparison, f, indent=2)
+            print(f" Train/val comparison saved to: {comparison_path}")
+
+            # ---- MLflow Artifacts ----
+            # Modellordner + JSONs as Artifacts 
+            try:
+                mlflow.log_artifacts(str(model_path), artifact_path="model")
+            except Exception:
+                pass
+
+            try:
+                # log evaluation jsons
+                if evaluation_dir.exists():
+                    mlflow.log_artifacts(str(evaluation_dir), artifact_path="evaluation")
+            except Exception:
+                pass
+
+            # Summary
+            print(f"\n{'=' * 60}")
+            print("TRAINING SUMMARY")
+            print(f"{'=' * 60}\n")
+            print(f"Model:           {model_name}")
+            print(f"Mode:            {'Retraining' if retrain else 'Initial training'}")
+            print(f"Duration:        {training_duration}")
+            print(f"Device:          {device}")
+            print(f"Train loss:      {train_result.training_loss:.4f}")
+            print(f"Test accuracy:   {test_metrics['eval_accuracy']:.4f}")
+            print(f"Test loss:       {test_metrics['eval_loss']:.4f}")
+            print(f"Saved to:        {model_path}")
+            print(f"MLflow run id:   {mlflow_run_id}")
+
+            # final status
+            mlflow.set_tag("status", "completed")
+
+            return trainer, metadata
+
+        except Exception as e:
+            mlflow.set_tag("status", "failed")
+            mlflow.log_param("error", str(e))
+            raise
+
 
 
 ################################################
