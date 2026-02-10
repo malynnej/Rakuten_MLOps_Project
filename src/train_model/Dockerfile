@@ -17,6 +17,9 @@ ENV PATH="$VENV_PATH/bin:$PATH"
 COPY pylock.toml .
 RUN uv pip sync pylock.toml
 
+# Add MLflow (build-time, no runtime installs)
+RUN uv pip install --python /app/venv/bin/python "mlflow<3"
+
 # Copy application code
 COPY . .
 
