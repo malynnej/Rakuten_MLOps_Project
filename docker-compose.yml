@@ -40,10 +40,11 @@ services:
     networks:
       - api_network
 
+
+
   mlflow_train_wrapper:
     profiles: ["on-demand"]
-    image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
-    working_dir: /app
+    image: rakuten_mlops_project-api_train
     env_file:
       - .env
     environment:
@@ -58,30 +59,24 @@ services:
       SERVICE_NAME: mlflow_train_wrapper
       RUN_TYPE: train
       GIT_PYTHON_REFRESH: quiet
-      UV_CACHE_DIR: /tmp/uv-cache
+    command: ["python", "run_train.py"]
     volumes:
-      - ./:/app
-      - uv_cache:/tmp/uv-cache
-    command: >
-      sh -lc "set -eux;
-        uv venv /app/venv --clear;
-        uv pip install -q --python /app/venv/bin/python mlflow requests pyyaml;
-        if [ \"${DVC_FAST_TRAIN:-0}\" != \"1\" ]; then
-          uv pip install -q --python /app/venv/bin/python --extra-index-url https://download.pytorch.org/whl/cpu torch datasets transformers accelerate numpy pandas scikit-learn;
-        fi;
-        /app/venv/bin/python scripts/mlflow_train_wrapper.py
-      "
+      - ./config:/app/config:ro
+      - ./data:/app/data:ro
+      - ./models:/app/models
+      - ./results:/app/results
     networks:
       - api_network
     depends_on:
       dvc_init:
         condition: service_healthy
+      mlflow:
+        condition: service_healthy
 
 
   mlflow_evaluate_wrapper:
     profiles: ["on-demand"]
-    image: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
-    working_dir: /app
+    image: rakuten_mlops_project-api_evaluate
     env_file:
       - .env
     environment:
@@ -95,21 +90,21 @@ services:
       SERVICE_NAME: mlflow_evaluate_wrapper
       RUN_TYPE: evaluate
       GIT_PYTHON_REFRESH: quiet
-      UV_CACHE_DIR: /tmp/uv-cache
+    command: ["python", "run_evaluate.py"]
     volumes:
-      - ./:/app
-      - uv_cache:/tmp/uv-cache
-    command: >
-      sh -lc "set -eux;
-        uv venv /app/venv --clear;
-        uv pip install -q --python /app/venv/bin/python mlflow requests pyyaml --extra-index-url https://download.pytorch.org/whl/cpu torch seaborn matplotlib numpy pandas scikit-learn;
-        /app/venv/bin/python scripts/mlflow_evaluate_wrapper.py
-      "
+      - ./config:/app/config:ro
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./results:/app/results
+
     networks:
       - api_network
     depends_on:
       dvc_init:
         condition: service_healthy
+      mlflow:
+        condition: service_healthy
+
 
 
 
