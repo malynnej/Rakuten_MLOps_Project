@@ -15,6 +15,7 @@ import pandas as pd
 from core.config import get_path, load_config
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from services.data_import.import_raw_data import import_raw_data
 from services.preprocess.text_preparation_pipeline import TextPreparationPipeline
@@ -26,6 +27,7 @@ app = FastAPI(
     root_path=API_ROOT_PATH,
 )
 
+instrumentator = Instrumentator().instrument(app)
 
 # Workaround to make docs available behind proxy AND locally
 @app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
@@ -53,6 +55,7 @@ processing_status = {
 @app.on_event("startup")
 async def startup():
     """Initialize pipeline at startup"""
+    instrumentator.expose(app)
     global pipeline
     try:
         pipeline = TextPreparationPipeline()

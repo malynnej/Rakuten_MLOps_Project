@@ -699,6 +699,20 @@ wheels = [
 ]
 
 [[packages]]
+name = "prometheus-client"
+version = "0.24.1"
+index = "https://pypi.org/simple"
+sdist = { url = "https://files.pythonhosted.org/packages/f0/58/a794d23feb6b00fc0c72787d7e87d872a6730dd9ed7c7b3e954637d8f280/prometheus_client-0.24.1.tar.gz", upload-time = 2026-01-14T15:26:26Z, size = 85616, hashes = { sha256 = "7e0ced7fbbd40f7b84962d5d2ab6f17ef88a72504dcf7c0b40737b43b2a461f9" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/74/c3/24a2f845e3917201628ecaba4f18bab4d18a337834c1df2a159ee9d22a42/prometheus_client-0.24.1-py3-none-any.whl", upload-time = 2026-01-14T15:26:24Z, size = 64057, hashes = { sha256 = "150db128af71a5c2482b36e588fc8a6b95e498750da4b17065947c16070f4055" } }]
+
+[[packages]]
+name = "prometheus-fastapi-instrumentator"
+version = "7.1.0"
+index = "https://pypi.org/simple"
+sdist = { url = "https://files.pythonhosted.org/packages/69/6d/24d53033cf93826aa7857699a4450c1c67e5b9c710e925b1ed2b320c04df/prometheus_fastapi_instrumentator-7.1.0.tar.gz", upload-time = 2025-03-19T19:35:05Z, size = 20220, hashes = { sha256 = "be7cd61eeea4e5912aeccb4261c6631b3f227d8924542d79eaf5af3f439cbe5e" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/27/72/0824c18f3bc75810f55dacc2dd933f6ec829771180245ae3cc976195dec0/prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl", upload-time = 2025-03-19T19:35:04Z, size = 19296, hashes = { sha256 = "978130f3c0bb7b8ebcc90d35516a6fe13e02d2eb358c8f83887cdef7020c31e9" } }]
+
+[[packages]]
 name = "pyarrow"
 version = "22.0.0"
 index = "https://pypi.org/simple"

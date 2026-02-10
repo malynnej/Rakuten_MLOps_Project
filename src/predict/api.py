@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from services.predict_text import PredictionService
 
@@ -22,6 +23,8 @@ app = FastAPI(
     root_path=API_ROOT_PATH,
 )
 
+instrumentator = Instrumentator().instrument(app)
+
 # Initialize prediction service at startup
 predictor = None
 
@@ -29,6 +32,7 @@ predictor = None
 @app.on_event("startup")
 async def startup_event():
     """Initialize predictor when API starts"""
+    instrumentator.expose(app)
     global predictor
     print("Initializing prediction service...")
     predictor = PredictionService()

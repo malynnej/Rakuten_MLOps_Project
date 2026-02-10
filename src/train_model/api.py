@@ -15,6 +15,7 @@ from datetime import datetime
 from core.config import get_path
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from services.train_model_text import train_bert_model
 
@@ -24,6 +25,14 @@ app = FastAPI(
     title="Training Service - Rakuten MLOps",
     root_path=API_ROOT_PATH,
 )
+
+instrumentator = Instrumentator().instrument(app)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize predictor when API starts"""
+    instrumentator.expose(app)
 
 
 # Workaround to make docs available behind proxy AND locally
