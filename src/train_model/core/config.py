@@ -60,3 +60,25 @@ def get_path(path_key: str):
         value = value[key]
 
     return resolve_path(value)
+
+
+def get_mlflow_tracking_uri() -> str:
+    """
+    Get MLflow tracking URI from environment or use default.
+    
+    Returns:
+        str: MLflow tracking URI
+    """
+    import os
+    return os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
+
+
+def get_mlflow_experiment_name() -> str:
+    """
+    Get MLflow experiment name from environment or use default.
+    
+    Returns:
+        str: MLflow experiment name
+    """
+    import os
+    return os.getenv("MLFLOW_EXPERIMENT_NAME", "rakuten_product_classification")
