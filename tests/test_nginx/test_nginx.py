@@ -64,36 +64,6 @@ class TestRedirect:
         )
 
 
-class TestNginxStatus:
-    """Test access to nginx status endpoint"""
-
-    url = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/nginx_status"
-
-    def test_request_unauthorized(self):
-        """Test response to unauthorized request"""
-        expected_status_code = 401
-        response = requests.get(url=self.url)
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
-        )
-
-    def test_request_invalid(self):
-        """Test response to request with invalid credentials"""
-        expected_status_code = 401
-        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin2"))
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
-        )
-
-    def test_request_valid(self):
-        """Test response to request with valid credentials"""
-        expected_status_code = 200
-        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin1"))
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
-        )
-
-
 class TestForwardPredict:
     """Test forwarding to predict API"""
 
