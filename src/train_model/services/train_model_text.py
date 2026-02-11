@@ -53,7 +53,6 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print(f"{'RETRAINING' if retrain else 'INITIAL TRAINING'} MODE")
     print(f"{'=' * 60}\n")
 
-
     # =========================================================
     # MLFLOW SETUP (Train-API integration)
     # =========================================================
@@ -64,8 +63,6 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     git_branch = os.getenv("GIT_BRANCH", "unknown")
 
     run_name = f"train_{model_name}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
-
-
 
     # Load configuration
     params = load_config("params")
@@ -453,21 +450,20 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
     print("STARTING TRAINING")
     print(f"{'=' * 60}\n")
 
-
     # =========================================================
     # MLFLOW RUN WRAPPER
     # =========================================================
     with mlflow.start_run(run_name=run_name) as run:
         mlflow_run_id = run.info.run_id
 
-        # Tags 
+        # Tags
         mlflow.set_tag("status", "running")
         mlflow.set_tag("component", "train_api")
         mlflow.set_tag("git_sha", git_sha)
         mlflow.set_tag("git_branch", git_branch)
         mlflow.set_tag("mode", "retrain" if retrain else "initial")
 
-        # Params 
+        # Params
         mlflow.log_param("model_name", model_name)
         mlflow.log_param("retrain", retrain)
         mlflow.log_param("batch_size", training_args.per_device_train_batch_size)
@@ -495,9 +491,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             training_duration = end_time - start_time
 
             mlflow.log_metric("train_loss_final", float(train_result.training_loss))
-            mlflow.log_metric(
-                "training_duration_seconds", float(training_duration.total_seconds())
-            )
+            mlflow.log_metric("training_duration_seconds", float(training_duration.total_seconds()))
 
             print(f"\n{'=' * 60}")
             print("TRAINING COMPLETE")
@@ -602,14 +596,14 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             }
 
             evaluation_dir = get_path("results.evaluation") / model_name
-            evaluation_dir.mkdir(parents=True, exist_ok=True) 
+            evaluation_dir.mkdir(parents=True, exist_ok=True)
             comparison_path = evaluation_dir / "train_val_comparison.json"
             with open(comparison_path, "w") as f:
                 json.dump(comparison, f, indent=2)
             print(f" Train/val comparison saved to: {comparison_path}")
 
             # ---- MLflow Artifacts ----
-            # Modellordner + JSONs as Artifacts 
+            # Modellordner + JSONs as Artifacts
             try:
                 mlflow.log_artifacts(str(model_path), artifact_path="model")
                 print("Model artifacts logged successfully")
@@ -649,7 +643,6 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             mlflow.set_tag("status", "failed")
             mlflow.log_param("error", str(e))
             raise
-
 
 
 ################################################

@@ -378,7 +378,7 @@ async def preprocess_batch(
     file: UploadFile = File(...), combine_existing_data: bool = False, save_holdout: bool = False
 ):
     """
-    Preprocess uploaded CSV file 
+    Preprocess uploaded CSV file
     """
     global pipeline
 
