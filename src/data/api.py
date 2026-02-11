@@ -1,6 +1,6 @@
 # src/data/api.py
 """
-Data Service API 
+Data Service API
 
 """
 
