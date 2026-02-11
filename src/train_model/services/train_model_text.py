@@ -505,6 +505,29 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             print(f"Training duration: {training_duration}")
             print(f"Final training loss: {train_result.training_loss:.4f}")
 
+            # Get final metrics from log_history
+            log_history = trainer.state.log_history
+
+            ################################################
+            ### Validation Metrics
+            ################################################
+
+            # Extract validation metrics (logged during training)
+            for entry in log_history:
+                epoch = entry.get("epoch")
+                if epoch:
+                    if "eval_loss" in entry:
+                        mlflow.log_metric("val_loss", entry["eval_loss"], step=int(epoch))
+                    if "eval_accuracy" in entry:
+                        mlflow.log_metric("val_accuracy", entry["eval_accuracy"], step=int(epoch))
+                    if "loss" in entry:  # Training loss per epoch
+                        mlflow.log_metric("train_loss", entry["loss"], step=int(epoch))
+
+            # Or get final validation metrics
+            eval_result = trainer.evaluate()
+            mlflow.log_metric("val_loss_final", eval_result["eval_loss"])
+            mlflow.log_metric("val_accuracy_final", eval_result["eval_accuracy"])
+
             ################################################
             ### EVALUATION ON TEST SET
             ################################################
@@ -579,6 +602,7 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             }
 
             evaluation_dir = get_path("results.evaluation") / model_name
+            evaluation_dir.mkdir(parents=True, exist_ok=True) 
             comparison_path = evaluation_dir / "train_val_comparison.json"
             with open(comparison_path, "w") as f:
                 json.dump(comparison, f, indent=2)
@@ -588,14 +612,18 @@ def train_bert_model(retrain: bool = False, model_name: str = "bert-rakuten-fina
             # Modellordner + JSONs as Artifacts 
             try:
                 mlflow.log_artifacts(str(model_path), artifact_path="model")
-            except Exception:
+                print("Model artifacts logged successfully")
+            except Exception as e:
+                print(f"Failed to log model artifacts: {type(e).__name__}: {e}")
                 pass
 
             try:
                 # log evaluation jsons
                 if evaluation_dir.exists():
                     mlflow.log_artifacts(str(evaluation_dir), artifact_path="evaluation")
-            except Exception:
+                print("Evaluation artifacts logged successfully")
+            except Exception as e:
+                print(f"Failed to log evaluation artifacts: {type(e).__name__}: {e}")
                 pass
 
             # Summary

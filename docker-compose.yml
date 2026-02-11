@@ -44,7 +44,7 @@ services:
 
   mlflow_train_wrapper:
     profiles: ["on-demand"]
-    image: rakuten_mlops_project-api_train
+    image: mlops_classification_e-commerce-api_train
     env_file:
       - .env
     environment:
@@ -76,7 +76,7 @@ services:
 
   mlflow_evaluate_wrapper:
     profiles: ["on-demand"]
-    image: rakuten_mlops_project-api_evaluate
+    image: mlops_classification_e-commerce-api_evaluate
     env_file:
       - .env
     environment:
