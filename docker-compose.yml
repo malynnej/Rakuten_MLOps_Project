@@ -1,114 +1,5 @@
 services:
 
-  mlflow_smoke:
-    image: python:3.11-slim
-    working_dir: /app
-    env_file:
-      - .env
-    environment:
-      MLFLOW_TRACKING_URI: http://mlflow:5000
-      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
-      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
-      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME:-rakuten-smoke}
-      SERVICE_NAME: mlflow_smoke
-      RUN_TYPE: smoke
-      GIT_PYTHON_REFRESH: quiet
-    volumes:
-      - ./:/app
-    command: >
-      sh -c "pip install -q 'mlflow<3' && python scripts/mlflow_smoke.py"
-    networks:
-      - api_network
-
-  mlflow_smoke_dagshub:
-    image: python:3.11-slim
-    working_dir: /app
-    env_file:
-      - .env
-    environment:
-      MLFLOW_TRACKING_URI: https://dagshub.com/jenny-lam/Rakuten_MLOps_Project.mlflow
-      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
-      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
-      MLFLOW_EXPERIMENT_NAME: rakuten-smoke
-      SERVICE_NAME: mlflow_smoke
-      RUN_TYPE: smoke
-      GIT_PYTHON_REFRESH: quiet
-    volumes:
-      - ./:/app
-    command: >
-      sh -c "pip install -q requests && python scripts/mlflow_smoke_rest.py"
-    networks:
-      - api_network
-
-
-
-  mlflow_train_wrapper:
-    profiles: ["on-demand"]
-    image: mlops_classification_e-commerce-api_train
-    env_file:
-      - .env
-    environment:
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
-      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
-      MLFLOW_EXPERIMENT_NAME: rakuten-training
-      GIT_SHA: ${GIT_SHA:-unknown}
-      GIT_BRANCH: ${GIT_BRANCH:-unknown}
-      MLFLOW_LOG_MODEL: ${MLFLOW_LOG_MODEL:-false}
-      DVC_FAST_TRAIN: ${DVC_FAST_TRAIN:-0}
-      SERVICE_NAME: mlflow_train_wrapper
-      RUN_TYPE: train
-      GIT_PYTHON_REFRESH: quiet
-    command: ["python", "run_train.py"]
-    volumes:
-      - ./config:/app/config:ro
-      - ./data:/app/data:ro
-      - ./models:/app/models
-      - ./results:/app/results
-    networks:
-      - api_network
-    depends_on:
-      dvc_init:
-        condition: service_healthy
-      mlflow:
-        condition: service_healthy
-
-
-  mlflow_evaluate_wrapper:
-    profiles: ["on-demand"]
-    image: mlops_classification_e-commerce-api_evaluate
-    env_file:
-      - .env
-    environment:
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}
-      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}
-      MLFLOW_EXPERIMENT_NAME: rakuten-evaluation
-      GIT_SHA: ${GIT_SHA:-unknown}
-      GIT_BRANCH: ${GIT_BRANCH:-unknown}
-      DVC_FAST_EVAL: ${DVC_FAST_EVAL:-0}
-      SERVICE_NAME: mlflow_evaluate_wrapper
-      RUN_TYPE: evaluate
-      GIT_PYTHON_REFRESH: quiet
-    command: ["python", "run_evaluate.py"]
-    volumes:
-      - ./config:/app/config:ro
-      - ./data:/app/data:ro
-      - ./models:/app/models:ro
-      - ./results:/app/results
-
-    networks:
-      - api_network
-    depends_on:
-      dvc_init:
-        condition: service_healthy
-      mlflow:
-        condition: service_healthy
-
-
-
-
-
   mlflow:
     image: python:3.11-slim
     container_name: mlflow_server
@@ -183,6 +74,15 @@ services:
       context: src/train_model
       dockerfile: Dockerfile
     container_name: train_api
+    env_file:
+    - .env  
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000  
+      MLFLOW_EXPERIMENT_NAME: rakuten-training 
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}  
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}  
+      GIT_SHA: ${GIT_SHA:-unknown} 
+      GIT_BRANCH: ${GIT_BRANCH:-unknown} 
     depends_on:
       dvc_init:
         condition: service_healthy
@@ -205,12 +105,13 @@ services:
     build:
       context: src/evaluate_model
       dockerfile: Dockerfile
+    container_name: evaluate_api
     depends_on:
       dvc_init:
         condition: service_healthy
     networks:
       - api_network
-    ports:
+    ports: 
       - "8004:8000"
     volumes:
       - ./data:/app/data:ro
@@ -281,6 +182,12 @@ services:
     depends_on:
       api_predict:
         condition: service_healthy
+      api_data:                    
+        condition: service_healthy  
+      api_train:                   
+        condition: service_healthy
+      api_evaluate:                
+        condition: service_healthy 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 5s

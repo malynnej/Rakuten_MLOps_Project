@@ -302,13 +302,7 @@ async def root():
         "service": "Rakuten ML Training API",
         "version": "1.0.0",
         "description": "Background training service for BERT text classification",
-        "endpoints": {
-            "train": "POST /train_model - Start model training",
-            "status": "GET /status - Get training status",
-            "health": "GET /health - Health check",
-            "prerequisites": "GET /prerequisites - Check training requirements",
-            "latest_results": "GET /results/latest - Latest training metrics",
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }
