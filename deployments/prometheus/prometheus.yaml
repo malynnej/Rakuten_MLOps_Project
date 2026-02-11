@@ -3,13 +3,41 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: "fastapi"
+  - job_name: "Data"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - data_api:8000
+        labels:
+          service_type: "api"
+          backend: "FastAPI"
+
+  - job_name: "Train"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - train_api:8000
+        labels:
+          service_type: "api"
+          backend: "FastAPI"
+
+  - job_name: "Evaluate"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - evaluate_api:8000
+        labels:
+          service_type: "api"
+          backend: "FastAPI"
+
+  - job_name: "Predict"
     metrics_path: /metrics
     static_configs:
       - targets:
           - predict_api:8000
         labels:
           service_type: "api"
+          backend: "FastAPI"
 
   - job_name: "nginx_exporter"
     static_configs:
