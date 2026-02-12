@@ -27,7 +27,7 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # Expose port
-EXPOSE 8001
+EXPOSE 8000
 
 # Run API
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

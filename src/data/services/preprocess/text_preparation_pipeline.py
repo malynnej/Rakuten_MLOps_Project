@@ -104,9 +104,7 @@ class TextPreparationPipeline:
         print("TEXT PREPARATION PIPELINE")
         print("=" * 60)
         print(
-            f"Mode: {
-                'Combine with preprocessed data' if combine_existing_data else 'only new raw data'
-            }"
+            f"Mode: {'Combine with preprocessed data' if combine_existing_data else 'only new raw data'}"  # noqa: E501
         )
         print(f"Input data: {len(df):,} samples")
         print(f"Save holdout: {save_holdout}")

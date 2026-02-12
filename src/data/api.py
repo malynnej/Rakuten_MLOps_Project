@@ -14,11 +14,24 @@ from datetime import datetime
 import pandas as pd
 from core.config import get_path, load_config
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from services.data_import.import_raw_data import import_raw_data
 from services.preprocess.text_preparation_pipeline import TextPreparationPipeline
 
-app = FastAPI(title="Rakuten ML Data Service API")
+API_ROOT_PATH = "/data"
+
+app = FastAPI(
+    title="Data Service - Rakuten MLOps",
+    root_path=API_ROOT_PATH,
+)
+
+
+# Workaround to make docs available behind proxy AND locally
+@app.get(f"{API_ROOT_PATH}/openapi.json", include_in_schema=False)
+async def get_docs():
+    return RedirectResponse(url="/openapi.json")
+
 
 # ============================================ GLOBAL STATE
 # ============================================
@@ -612,6 +625,6 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.environ.get("PORT", 8001))
+    port = int(os.environ.get("PORT", 8000))
 
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

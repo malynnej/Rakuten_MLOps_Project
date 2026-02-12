@@ -114,7 +114,7 @@ class TestHealth:
 class TestPredictSingleText:
     """Test class for single prediction API endpoint"""
 
-    url = f"http://{API_ADDRESS}:{API_PORT}/predict/text"
+    url = f"http://{API_ADDRESS}:{API_PORT}/predict_text"
     test_text = "Zombie action figure collectible model"
 
     @pytest.fixture(scope="class")
@@ -185,7 +185,7 @@ class TestPredictSingleText:
 class TestPredictProduct:
     """Test class for product prediction API endpoint"""
 
-    url = f"http://{API_ADDRESS}:{API_PORT}/predict/product"
+    url = f"http://{API_ADDRESS}:{API_PORT}/predict_product"
     test_designation = "Nike Air Max 90"
     test_description = "Classic running shoes"
 
@@ -257,7 +257,7 @@ class TestPredictProduct:
 class TestPredictBatch:
     """Test class for batch prediction API endpoint"""
 
-    url = f"http://{API_ADDRESS}:{API_PORT}/predict/batch"
+    url = f"http://{API_ADDRESS}:{API_PORT}/predict_batch"
     test_texts = [
         "Wireless Bluetooth headphones with noise cancellation",
         "Organic green tea bags for healthy lifestyle",
