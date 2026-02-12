@@ -108,9 +108,9 @@ class TextCleaning:
                 # BeautifulSoup parsing (unavoidable apply, but without progress
                 # bar)
                 df[col] = df[col].apply(
-                    lambda x: BeautifulSoup(x, "html.parser").get_text(separator="").strip()
-                    if x
-                    else x
+                    lambda x: (
+                        BeautifulSoup(x, "html.parser").get_text(separator="").strip() if x else x
+                    )
                 )
             else:
                 print(f" Warning: Column '{col}' not found in DataFrame.")
