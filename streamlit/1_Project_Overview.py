@@ -9,13 +9,14 @@ st.set_page_config(
     layout="wide"
 )
 
+
+st.title("Project Overview MLOps - Rakuten E-Commerce Product Classification")
+
 st.write("")
 st.write("Date: 13th February 2026")
 st.write("Team: Julia Wilczoch, Steffen Karalus, Jenny Lam")
 st.write("Mentor: Kilyan (Liora)")
 st.write("")
-
-st.title("Project Overview")
 
 st.write("---")
 
@@ -30,14 +31,11 @@ st.write("---")
 # ========== THE OBJECTIVE ==========
 st.subheader("Project Objective")
 
-st.write("[PLACEHOLDER - Alternative 1 to first objective: Optimize And Automate Development, Training And Deployment Of ML Model]")
-st.write("[PLACEHOLDER - Alternative 2 to first objective: Efficient Deployment And Scalable Maintenance Of ML/DL Model]")
-
 col1, col2, = st.columns(2)
 
 with col1:
     st.markdown("""
-    <div style="background-color: #d62728; padding: 20px; border-radius: 10px; text-align: center;">
+    <div style="background-color: #d62728; padding: 20px; border-radius: 10px; text-align: center;height: 220px; display: flex; flex-direction: column; justify-content: center;">
         <p style="margin: 0; font-size: 20px; color: white;">Architecture</p>
         <h2 style="margin: 10px 0; font-size: 36px; color: white;">Reproducible End-To-End ML Model Architecture</h2>
     </div>
@@ -45,7 +43,7 @@ with col1:
 
 with col2:
     st.markdown("""
-    <div style="background-color: #8c564b; padding: 20px; border-radius: 10px; text-align: center;">
+    <div style="background-color: #8c564b; padding: 20px; border-radius: 10px; text-align: center;height: 220px; display: flex; flex-direction: column; justify-content: center;">
         <p style="margin: 0; font-size: 20px; color: white;">Data</p>
         <h5 style="margin: 10px 0; font-size: 48px; color: white;">Baseline ML Data Pipeline</h5>
         <p style="margin: 0; font-size: 14px; color: white;">based on text</p>
@@ -57,10 +55,11 @@ st.write("---")
 # Key metrics
 st.subheader("Key Facts")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 col1.metric("Microservices", "4")
-col2.metric("MLOps Tools Used", "[PLACEHOLDER]")
-col3.metric("Weighted F1 Score", "83%")
+col2.metric("Weighted F1 Score", "83%")
+
+st.metric("Setup", "✅ Datapipe & MLOps Foundations set")
 
 st.write("---")
 

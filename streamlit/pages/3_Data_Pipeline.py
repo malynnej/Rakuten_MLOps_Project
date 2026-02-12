@@ -42,6 +42,9 @@ with challenge_col1:
     - **Product Type Code**: Product category (target variable)
     """)
 
+    image_raw = Image.open('./streamlit/images/Raw_Data.jpg')
+    st.image(image_raw, width=450)
+
 with challenge_col2:
     st.markdown("**Text Exploration:**")
     st.write("""
@@ -107,7 +110,7 @@ with col1:
     <div style="background-color: #50b63e; padding: 20px; border-radius: 10px; margin: 10px 0;">
         <p style="margin: 0; font-size: 14px; color: white;">Weighted F1</p>
         <h2 style="margin: 10px 0; font-size: 42px; color: white;">83%</h2>
-        <p style="margin: 0; font-size: 16px; color: white;">Overall Metric</p>
+        <p style="margin: 0; font-size: 16px; color: white;"></p>
     </div>
     """, unsafe_allow_html=True)
     

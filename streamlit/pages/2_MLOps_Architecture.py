@@ -16,8 +16,18 @@ st.title("ML Ops Architecture")
 st.write("---")
 
 # ========== ML Ops Architecture==========
-st.subheader("MLOps Principles")
-st.write("[PLACEHOLDER: Explain MLOps Principles]")
+st.subheader("MLOps Definition & Principles")
+st.markdown("""
+    **MLOps = Machine Learning** Operations as bridge between ML and daily operations   
+    Managing full ML lifecycle from retrieving data, training models to deploying and monitoring them in real-world enviroment  
+    * Build reproducible ML pipelines
+    * Build reusable software environments
+    * Managing and deploy models from anywhere
+    * Monitor ML applications for operational and ML-related issues
+    * Automation of end-to-end ML lifecycle 
+    """)
+image_ML = Image.open('./streamlit/images/MLPrinc.jpg')
+st.image(image_ML, width=800)
 
 st.write("---")
 
