@@ -25,7 +25,7 @@ st.title("Live Product Category Prediction")
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'api_url' not in st.session_state:
-    st.session_state.api_url = "https://localhost:8443"
+    st.session_state.api_url = "https://localhost:8443/predict/"
 if 'auth' not in st.session_state:
     st.session_state.auth = None
 
@@ -35,7 +35,7 @@ def login_page():
     st.markdown("### Please Login to Access Prediction Service")
     
     with st.form("login_form"):
-        api_url = st.text_input("API URL", value="https://localhost:8443")
+        api_url = st.text_input("API URL", value="https://localhost:8443/predict/")
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         
@@ -49,7 +49,7 @@ def login_page():
                 try:
                     auth = HTTPBasicAuth(username, password)
                     response = requests.get(
-                        f"{api_url}/predict/",
+                        f"{api_url}",
                         auth=auth,
                         verify=False,
                         timeout=5
@@ -88,7 +88,7 @@ def show_logout():
 def check_api_health():
     try:
         response = requests.get(
-            f"{st.session_state.api_url}/predict/health",
+            f"{st.session_state.api_url}health",
             auth=st.session_state.auth,
             verify=False,  # Skip SSL verification for self-signed cert
             timeout=5
@@ -147,9 +147,13 @@ def prediction_page():
                             "return_probabilities": return_probs,
                             "top_k": top_k
                         }
+
+                        # Show request
+                        with st.expander("View Request Payload"):
+                            st.json(payload)
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_text", 
+                            f"{st.session_state.api_url}predict_text", 
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,  
@@ -240,7 +244,7 @@ def prediction_page():
                         }
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_product",  
+                            f"{st.session_state.api_url}predict_product",  
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,
@@ -329,7 +333,7 @@ def prediction_page():
                         }
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_batch",  # Updated endpoint
+                            f"{st.session_state.api_url}predict_batch",  # Updated endpoint
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,
@@ -392,4 +396,3 @@ if not st.session_state.logged_in:
     login_page()
 else:
     prediction_page()
-
