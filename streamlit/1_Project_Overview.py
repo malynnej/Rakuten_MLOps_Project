@@ -59,7 +59,7 @@ st.subheader("Key Facts")
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Microservices", "4")
-col2.metric("MLOps Tools", "[PLACEHOLDER]")
+col2.metric("MLOps Tools Used", "[PLACEHOLDER]")
 col3.metric("Weighted F1 Score", "83%")
 
 st.write("---")

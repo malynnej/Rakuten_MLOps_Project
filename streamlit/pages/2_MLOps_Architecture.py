@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 
 # --- Streamlit Page ---
@@ -21,5 +22,7 @@ st.write("[PLACEHOLDER: Explain MLOps Principles]")
 st.write("---")
 
 st.write("")
-st.write("[PLACEHOLDER: Show overall MLOps Architecture chart]")
+st.subheader("Basic MLOps Architecture Rakuten")
+image_ML = Image.open('./streamlit/images/MLOps_Architecture.jpg')
+st.image(image_ML, width=1000)
 st.write("")
