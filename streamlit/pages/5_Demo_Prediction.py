@@ -2,10 +2,8 @@
 Live Prediction Page - Streamlit Integration
 """
 
-import pandas as pd
 import streamlit as st
 import requests
-import json
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import urllib3
@@ -96,7 +94,7 @@ def check_api_health():
             timeout=5
         )
         return response.status_code == 200
-    except:
+    except requests.exceptions.RequestException:
         return False
 
 
