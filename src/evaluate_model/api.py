@@ -18,6 +18,7 @@ from typing import Optional
 import matplotlib
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 matplotlib.use("Agg")  # Use non-interactive backend for background tasks
@@ -31,6 +32,8 @@ app = FastAPI(
     title="Evaluation Service - Rakuten MLOps",
     root_path=API_ROOT_PATH,
 )
+
+instrumentator = Instrumentator().instrument(app)
 
 
 # Workaround to make docs available behind proxy AND locally
@@ -53,6 +56,8 @@ evaluation_status = {
 @app.on_event("startup")
 async def startup_event():
     """Load model when API starts"""
+    instrumentator.expose(app)
+
     global evaluator
 
     print("=" * 60)
@@ -96,13 +101,7 @@ async def root():
         "service": "Rakuten ML Evaluation API",
         "version": "1.0.0",
         "description": "Model evaluation and performance analysis",
-        "endpoints": {
-            "evaluate": "POST /evaluate_model - Run model evaluation",
-            "status": "GET /status - Evaluation status",
-            "model_info": "GET /model/info - Model information",
-            "results": "GET /results/latest - Latest evaluation results",
-            "health": "GET /health - Health check",
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }
@@ -114,33 +113,6 @@ async def evaluate_model(request: EvaluateRequest, background_tasks: BackgroundT
     """
     Evaluate model on test dataset.
     Runs in background to avoid timeout.
-
-    Args:
-        test_path: Path to test.parquet (optional, uses config default)
-        output_dir: Output directory for results (optional, uses config default)
-        batch_size: Batch size for evaluation (default: 32)
-        model_name: Model to evaluate (default: bert-rakuten-final)
-
-    Returns:
-        Evaluation job status
-
-    Example:
-        POST /evaluate_model
-        {
-            "test_path": null,
-            "output_dir": "./results/evaluation",
-            "batch_size": 32,
-            "model_name": "bert-rakuten-final"
-        }
-
-        Response:
-        {
-            "status": "evaluation_started",
-            "message": "Evaluation job submitted",
-            "model_name": "bert-rakuten-final",
-            "output_dir": "./results/evaluation/bert-rakuten-final",
-            "timestamp": "2026-01-28T01:05:00"
-        }
     """
     global evaluation_status
 

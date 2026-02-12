@@ -7,8 +7,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import argparse
 
-from services.train_model_text import train_bert_model
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -33,6 +31,8 @@ def main() -> None:
         )
 
         return
+
+    from services.train_model_text import train_bert_model
 
     train_bert_model(retrain=args.retrain, model_name=args.model_name)
 

@@ -15,6 +15,7 @@ from datetime import datetime
 from core.config import get_path
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from services.train_model_text import train_bert_model
 
@@ -24,6 +25,14 @@ app = FastAPI(
     title="Training Service - Rakuten MLOps",
     root_path=API_ROOT_PATH,
 )
+
+instrumentator = Instrumentator().instrument(app)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize predictor when API starts"""
+    instrumentator.expose(app)
 
 
 # Workaround to make docs available behind proxy AND locally
@@ -91,6 +100,7 @@ def run_training(retrain: bool, model_name: str):
             "mode": metadata.get("mode"),
             "base_model": metadata.get("base_model"),
             "model_path": str(get_path("models.save_dir") / model_name),
+            "mlflow_run_id": metadata.get("mlflow_run_id"),
         }
 
         print("\n Background training completed successfully!")
@@ -301,13 +311,7 @@ async def root():
         "service": "Rakuten ML Training API",
         "version": "1.0.0",
         "description": "Background training service for BERT text classification",
-        "endpoints": {
-            "train": "POST /train_model - Start model training",
-            "status": "GET /status - Get training status",
-            "health": "GET /health - Health check",
-            "prerequisites": "GET /prerequisites - Check training requirements",
-            "latest_results": "GET /results/latest - Latest training metrics",
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }
