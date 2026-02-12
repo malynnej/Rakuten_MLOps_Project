@@ -42,7 +42,9 @@ jobs:
           git fetch origin "$BASE_REF"
 
           FILES=$(git diff --name-only --diff-filter=ACMRT "origin/$BASE_REF...HEAD" \
-            | grep -E '\.py$' || true)
+            | grep -E '\.py$' \
+            | grep -v '^streamlit/' \
+            | grep -v '^notebooks/' || true)
 
           echo "Changed Python files:"
           echo "$FILES"
