@@ -58,7 +58,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8001:8000"
+      - "8001:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data
       - ./models:/app/models
@@ -89,7 +89,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8002:8000"
+      - "8002:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models
@@ -112,7 +112,7 @@ services:
     networks:
       - api_network
     ports: 
-      - "8004:8000"
+      - "8004:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models:ro
@@ -136,7 +136,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8000:8000"
+      - "8000:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -155,10 +155,6 @@ services:
     depends_on:
       api_predict:
         condition: service_healthy
-      api_train:
-        condition: service_healthy
-      api_evaluate:
-        condition: service_healthy
     networks:
       - api_network
     volumes:
@@ -175,7 +171,7 @@ services:
     ports:
       - "8080:8080"
       - "8443:8443"
-      - "5001:5001"
+      - "5001:5001"  # TODO: check if this port is needed, remove
     networks:
       - api_network
       - edge_network
@@ -197,6 +193,10 @@ services:
   
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter
+    container_name: nginx-exporter
+    depends_on:
+      nginx:
+        condition: service_healthy
     ports:
       - "9113:9113"  # Exporter default port
     command:
