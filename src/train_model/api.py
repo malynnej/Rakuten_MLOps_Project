@@ -91,6 +91,7 @@ def run_training(retrain: bool, model_name: str):
             "mode": metadata.get("mode"),
             "base_model": metadata.get("base_model"),
             "model_path": str(get_path("models.save_dir") / model_name),
+            "mlflow_run_id": metadata.get("mlflow_run_id"),
         }
 
         print("\n Background training completed successfully!")
@@ -301,13 +302,7 @@ async def root():
         "service": "Rakuten ML Training API",
         "version": "1.0.0",
         "description": "Background training service for BERT text classification",
-        "endpoints": {
-            "train": "POST /train_model - Start model training",
-            "status": "GET /status - Get training status",
-            "health": "GET /health - Health check",
-            "prerequisites": "GET /prerequisites - Check training requirements",
-            "latest_results": "GET /results/latest - Latest training metrics",
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }

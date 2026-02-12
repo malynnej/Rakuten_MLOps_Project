@@ -1,10 +1,7 @@
 # src/data/api.py
 """
-Data Service API with Retraining Support
+Data Service API
 
-Handles: 1. Importing raw data from S3 2. Preprocessing data for training (with
-strategy selection) 3. New class detection and handling 4. Batch preprocessing
-from uploaded files 5. Retraining workflows (full/hybrid strategies)
 """
 
 import os
@@ -381,15 +378,7 @@ async def preprocess_batch(
     file: UploadFile = File(...), combine_existing_data: bool = False, save_holdout: bool = False
 ):
     """
-    Preprocess uploaded CSV file with retraining support.
-
-    Use cases: - Upload new product data for retraining - Test preprocessing on
-    custom dataset - Simulate new data arrival
-
-    Example:
-        POST /preprocess/batch - Upload CSV file with columns: designation,
-        description, prdtypecode - Form data: combine_existing_data= False
-        (default), save_holdout = False (default)
+    Preprocess uploaded CSV file
     """
     global pipeline
 
@@ -596,24 +585,7 @@ async def root():
             "Combine new with old data",
             "Holdout set management",
         ],
-        "endpoints": {
-            "import": {
-                "import_raw": "POST /import/raw - Import raw data from S3",
-                "import_status": "GET /import/status - Check raw data files",
-            },
-            "preprocessing": {
-                "from_raw": "POST /preprocess/from-raw - Preprocess raw data",
-                "batch": "POST /preprocess/batch - Preprocess uploaded file",
-                "check_new_classes": "POST /preprocess/check-new-classes - Detect new classes",
-            },
-            "status": {
-                "status": "GET /status - Get preprocessing status",
-                "health": "GET /health - Health check",
-                "prerequisites": "GET /prerequisites - Check readiness",
-                "latest_results": "GET /results/latest - Latest preprocessing results",
-                "data_info": "GET /data/info - Processed data information",
-            },
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }

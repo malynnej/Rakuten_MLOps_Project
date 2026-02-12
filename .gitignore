@@ -134,3 +134,9 @@ metrics/metrics.json
 # Allow DVC pointer files even if models/ is ignored
 
 # --- Models: ignore artifacts, keep DVC pointers ---
+.env
+
+# Backup files
+*.backup
+*.bak
+*.tmp

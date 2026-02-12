@@ -1,18 +1,68 @@
 services:
 
+  mlflow:
+    image: python:3.11-slim
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    command:
+      - sh
+      - -lc
+      - |
+        set -eux
+        pip install -q mlflow
+        mkdir -p /mlflow/artifacts
+        mlflow server \
+          --host 0.0.0.0 \
+          --port 5000 \
+          --backend-store-uri sqlite:////mlflow/mlflow.db \
+          --default-artifact-root /mlflow/artifacts \
+          --allowed-hosts '*' \
+          --cors-allowed-origins '*'
+    networks:
+      - api_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=2).read(10)"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+
+  dvc_init:
+    image: python:3.11-slim
+    container_name: dvc_init
+    working_dir: /app
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q dvc dvc-http && sh scripts/dvc_pull_if_needed.sh"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /tmp/dvc_done"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    networks:
+      - api_network
+
   api_data:
     build:
       context: src/data
       dockerfile: Dockerfile
     container_name: data_api
-    networks: 
+    depends_on:
+      dvc_init:
+        condition: service_healthy
+    networks:
       - api_network
     ports:
       - "8001:8000"
     volumes:
-      - ./data:/app/data              
-      - ./models:/app/models          
-      - ./config:/app/config:ro       
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -24,14 +74,26 @@ services:
       context: src/train_model
       dockerfile: Dockerfile
     container_name: train_api
-    networks: 
+    env_file:
+    - .env  
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000  
+      MLFLOW_EXPERIMENT_NAME: rakuten-training 
+      MLFLOW_TRACKING_USERNAME: ${MLFLOW_TRACKING_USERNAME}  
+      MLFLOW_TRACKING_PASSWORD: ${MLFLOW_TRACKING_PASSWORD}  
+      GIT_SHA: ${GIT_SHA:-unknown} 
+      GIT_BRANCH: ${GIT_BRANCH:-unknown} 
+    depends_on:
+      dvc_init:
+        condition: service_healthy
+    networks:
       - api_network
     ports:
       - "8002:8000"
     volumes:
-      - ./data:/app/data:ro           
-      - ./models:/app/models          
-      - ./config:/app/config:ro 
+      - ./data:/app/data:ro
+      - ./models:/app/models
+      - ./config:/app/config:ro
       - ./results:/app/results
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -44,15 +106,18 @@ services:
       context: src/evaluate_model
       dockerfile: Dockerfile
     container_name: evaluate_api
-    networks: 
+    depends_on:
+      dvc_init:
+        condition: service_healthy
+    networks:
       - api_network
-    ports:
+    ports: 
       - "8004:8000"
     volumes:
-      - ./data:/app/data:ro           
-      - ./models:/app/models:ro       
-      - ./results:/app/results        
-      - ./config:/app/config:ro       
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./results:/app/results
+      - ./config:/app/config:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -68,10 +133,10 @@ services:
     deploy:
       replicas: 1
     container_name: predict_api
-    networks: 
+    networks:
       - api_network
     ports:
-      - "8000:8000" # TODO: remove port mapping (visibility from host) for production
+      - "8000:8000"
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -82,7 +147,7 @@ services:
       retries: 12
 
   test_api_predict:
-    build: 
+    build:
       context: tests/test_api_predict
       args:
         LOGDIR: /logs
@@ -94,7 +159,7 @@ services:
         condition: service_healthy
       api_evaluate:
         condition: service_healthy
-    networks: 
+    networks:
       - api_network
     volumes:
       - ./logs:/logs
@@ -110,18 +175,25 @@ services:
     ports:
       - "8080:8080"
       - "8443:8443"
-    networks: 
+      - "5001:5001"
+    networks:
       - api_network
       - edge_network
     depends_on:
       api_predict:
         condition: service_healthy
+      api_data:                    
+        condition: service_healthy  
+      api_train:                   
+        condition: service_healthy
+      api_evaluate:                
+        condition: service_healthy 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 5s
       timeout: 2s
       retries: 3
-  
+
   test_nginx:
     build:
       context: tests/test_nginx
@@ -144,7 +216,7 @@ services:
 
 networks:
   api_network:
-    # internal network not exposed to host
-    # internal: true
   edge_network:
-    # network exposed to host for reverse proxy
+
+volumes:
+  uv_cache:

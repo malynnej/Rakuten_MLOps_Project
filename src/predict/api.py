@@ -69,12 +69,7 @@ async def root():
         "service": "Rakuten ML Prediction API",
         "version": "1.0.0",
         "description": "Real-time product category prediction",
-        "endpoints": {
-            "predict_text": "POST /predict_text - Predict from raw text",
-            "predict_product": "POST /predict_product - Predict from designation + description",
-            "predict_batch": "POST /predict_batch - Batch prediction",
-            "health": "GET /health - Health check",
-        },
+        "endpoints": "endpoints for accessing service",
         "docs": "/docs",
         "timestamp": datetime.now().isoformat(),
     }
