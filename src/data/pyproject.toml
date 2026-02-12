@@ -25,6 +25,7 @@ api = [
     "uvicorn>=0.40.0",
     "pydantic>=2.12.4",
     "python-multipart>=0.0.9",  # For file uploads
+    "prometheus-fastapi-instrumentator>=7.1.0",
 ]
 
 [tool.uv]

@@ -58,7 +58,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8001:8000"
+      - "8001:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data
       - ./models:/app/models
@@ -89,7 +89,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8002:8000"
+      - "8002:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models
@@ -112,7 +112,7 @@ services:
     networks:
       - api_network
     ports: 
-      - "8004:8000"
+      - "8004:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models:ro
@@ -136,7 +136,7 @@ services:
     networks:
       - api_network
     ports:
-      - "8000:8000"
+      - "8000:8000"  # TODO: remove port forwarding for production
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -155,10 +155,6 @@ services:
     depends_on:
       api_predict:
         condition: service_healthy
-      api_train:
-        condition: service_healthy
-      api_evaluate:
-        condition: service_healthy
     networks:
       - api_network
     volumes:
@@ -175,10 +171,11 @@ services:
     ports:
       - "8080:8080"
       - "8443:8443"
-      - "5001:5001"
+      - "5001:5001"  # TODO: check if this port is needed, remove
     networks:
       - api_network
       - edge_network
+      - monitoring_network
     depends_on:
       api_predict:
         condition: service_healthy
@@ -193,6 +190,19 @@ services:
       interval: 5s
       timeout: 2s
       retries: 3
+  
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter
+    container_name: nginx-exporter
+    depends_on:
+      nginx:
+        condition: service_healthy
+    ports:
+      - "9113:9113"  # Exporter default port
+    command:
+      - "--nginx.scrape-uri=http://nginx_reverse_proxy:8080/nginx_status"
+    networks:
+      - monitoring_network
 
   test_nginx:
     build:
@@ -214,9 +224,45 @@ services:
       HTTP_PORT: 8080
       REQUESTS_CA_BUNDLE: /etc/nginx/certs/nginx.crt
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./deployments/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--web.external-url=/prometheus/"
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring_network
+      - api_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./deployments/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./deployments/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring_network
+
 networks:
   api_network:
+    # internal network not exposed to host
+    # internal: true
   edge_network:
+    # network exposed to host for reverse proxy
+  monitoring_network:
+    # internal: true
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
 
 volumes:
   uv_cache:

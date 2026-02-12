@@ -18,6 +18,7 @@ from typing import Optional
 import matplotlib
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 matplotlib.use("Agg")  # Use non-interactive backend for background tasks
@@ -31,6 +32,8 @@ app = FastAPI(
     title="Evaluation Service - Rakuten MLOps",
     root_path=API_ROOT_PATH,
 )
+
+instrumentator = Instrumentator().instrument(app)
 
 
 # Workaround to make docs available behind proxy AND locally
@@ -53,6 +56,8 @@ evaluation_status = {
 @app.on_event("startup")
 async def startup_event():
     """Load model when API starts"""
+    instrumentator.expose(app)
+
     global evaluator
 
     print("=" * 60)

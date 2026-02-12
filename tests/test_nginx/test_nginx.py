@@ -12,7 +12,7 @@ HTTPS_PORT = os.environ.get("HTTPS_PORT", default="8443")
 HTTP_PORT = os.environ.get("HTTP_PORT", default="8080")
 
 # waiting time for rate limited endpoints
-SLEEP_SECS = 0.5
+SLEEP_SECS = 1.0
 
 
 class TestHealthCheck:
@@ -61,36 +61,6 @@ class TestRedirect:
         expected_status_code = 301  # Moved Permanently
         assert req.status_code == expected_status_code, (
             f"Expected redirect status code {expected_status_code}, got {req.status_code}"
-        )
-
-
-class TestNginxStatus:
-    """Test access to nginx status endpoint"""
-
-    url = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/nginx_status"
-
-    def test_request_unauthorized(self):
-        """Test response to unauthorized request"""
-        expected_status_code = 401
-        response = requests.get(url=self.url)
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
-        )
-
-    def test_request_invalid(self):
-        """Test response to request with invalid credentials"""
-        expected_status_code = 401
-        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin2"))
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
-        )
-
-    def test_request_valid(self):
-        """Test response to request with valid credentials"""
-        expected_status_code = 200
-        response = requests.get(url=self.url, auth=HTTPBasicAuth("admin1", "admin1"))
-        assert response.status_code == expected_status_code, (
-            f"Expected {expected_status_code}, got {response.status_code}"
         )
 
 
@@ -255,4 +225,45 @@ class TestForwardEvaluate:
         response = requests.get(url=url, auth=self.auth)
         assert response.status_code == expected_status_code, (
             f"Expected {expected_status_code}, got {response.status_code}"
+        )
+
+
+class TestRateLimit:
+    """Test the nginx rate limiting"""
+
+    url = f"https://{NGINX_ADDRESS}:{HTTPS_PORT}/predict/"
+    auth = HTTPBasicAuth("user1", "user1")
+    burstLimit = 10
+
+    @pytest.fixture(autouse=True, scope="class")
+    def slow_down(self):
+        """Slow down API tests to not reach request limit"""
+        yield
+        logging.info(f"Finished {self}")
+        time.sleep(SLEEP_SECS)
+
+    def request_status_code(self):
+        """Send request to URL and return status code"""
+        response = requests.get(self.url, auth=self.auth)
+        return response.status_code
+
+    def test_requests_below_burst_limit(self):
+        """Test all requests below burst limit are accepted"""
+        time.sleep(2)
+        numRequests = self.burstLimit
+
+        statusCodes = [self.request_status_code() for _ in range(numRequests)]
+        assert all(code == 200 for code in statusCodes), (
+            f"Expected all status codes 200, got {statusCodes}"
+        )
+
+    def test_requests_above_burst_limit(self):
+        """Test requests are rejected above burst limit"""
+        time.sleep(2)
+        numRequests = 2 * self.burstLimit
+
+        statusCodes = [self.request_status_code() for _ in range(numRequests)]
+
+        assert any(code == 503 for code in statusCodes), (
+            f"Expected some status codes 503, got {statusCodes}"
         )
