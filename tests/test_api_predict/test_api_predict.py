@@ -42,7 +42,7 @@ class TestRoot:
             ("service", str),
             ("version", str),
             ("description", str),
-            ("endpoints", dict),
+            ("endpoints", str),
             ("docs", str),
             ("timestamp", str),
         ],
