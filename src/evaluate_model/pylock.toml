@@ -357,17 +357,17 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/c9/7a/cef76fd8438a42f
 
 [[packages]]
 name = "fastapi"
-version = "0.128.8"
+version = "0.129.0"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/01/72/0df5c58c954742f31a7054e2dd1143bae0b408b7f36b59b85f928f9b456c/fastapi-0.128.8.tar.gz", upload-time = 2026-02-11T15:19:36Z, size = 375523, hashes = { sha256 = "3171f9f328c4a218f0a8d2ba8310ac3a55d1ee12c28c949650288aee25966007" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/9f/37/37b07e276f8923c69a5df266bfcb5bac4ba8b55dfe4a126720f8c48681d1/fastapi-0.128.8-py3-none-any.whl", upload-time = 2026-02-11T15:19:35Z, size = 103630, hashes = { sha256 = "5618f492d0fe973a778f8fec97723f598aa9deee495040a8d51aaf3cf123ecf1" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/48/47/75f6bea02e797abff1bca968d5997793898032d9923c1935ae2efdece642/fastapi-0.129.0.tar.gz", upload-time = 2026-02-12T13:54:52Z, size = 375450, hashes = { sha256 = "61315cebd2e65df5f97ec298c888f9de30430dd0612d59d6480beafbc10655af" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/9e/dd/d0ee25348ac58245ee9f90b6f3cbb666bf01f69be7e0911f9851bddbda16/fastapi-0.129.0-py3-none-any.whl", upload-time = 2026-02-12T13:54:54Z, size = 102950, hashes = { sha256 = "b4946880e48f462692b31c083be0432275cbfb6e2274566b1be91479cc1a84ec" } }]
 
 [[packages]]
 name = "filelock"
-version = "3.20.3"
+version = "3.21.0"
 index = "https://pypi.org/simple"
-sdist = { url = "https://files.pythonhosted.org/packages/1d/65/ce7f1b70157833bf3cb851b556a37d4547ceafc158aa9b34b36782f23696/filelock-3.20.3.tar.gz", upload-time = 2026-01-09T17:55:05Z, size = 19485, hashes = { sha256 = "18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/b5/36/7fb70f04bf00bc646cd5bb45aa9eddb15e19437a28b8fb2b4a5249fac770/filelock-3.20.3-py3-none-any.whl", upload-time = 2026-01-09T17:55:04Z, size = 16701, hashes = { sha256 = "4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/6b/cc63cdbff46eba1ce2fbd058e9699f99c43f7e604da15413ca0331040bff/filelock-3.21.0.tar.gz", upload-time = 2026-02-12T15:40:48Z, size = 31341, hashes = { sha256 = "48c739c73c6fcacd381ed532226991150947c4a76dcd674f84d6807fd55dbaf2" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/da/ab/05190b5a64101fcb743bc63a034c0fac86a515c27c303c69221093565f28/filelock-3.21.0-py3-none-any.whl", upload-time = 2026-02-12T15:40:46Z, size = 21381, hashes = { sha256 = "0f90eee4c62101243df3007db3cf8fc3ebf1bb13541d3e72c687d6e0f3f7d531" } }]
 
 [[packages]]
 name = "fonttools"

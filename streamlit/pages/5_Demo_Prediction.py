@@ -25,21 +25,21 @@ st.title("Live Product Category Prediction")
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'api_url' not in st.session_state:
-    st.session_state.api_url = "https://localhost:8443"
+    st.session_state.api_url = "https://localhost:8443/predict/"
 if 'auth' not in st.session_state:
     st.session_state.auth = None
 
 
 # Login Form
 def login_page():
-    st.markdown("### Please Login to Access Prediction Service")
+    st.markdown("### Set Credentials to Access Prediction Service")
     
     with st.form("login_form"):
-        api_url = st.text_input("API URL", value="https://localhost:8443")
+        api_url = st.text_input("API URL", value="https://localhost:8443/predict/")
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         
-        submitted = st.form_submit_button("Login", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("Set and verify credentials", type="primary", use_container_width=True)
         
         if submitted:
             if not username or not password:
@@ -49,7 +49,7 @@ def login_page():
                 try:
                     auth = HTTPBasicAuth(username, password)
                     response = requests.get(
-                        f"{api_url}/predict/",
+                        f"{api_url}",
                         auth=auth,
                         verify=False,
                         timeout=5
@@ -77,9 +77,9 @@ def login_page():
 # Logout button in sidebar
 def show_logout():
     with st.sidebar:
-        st.markdown(f"**Logged in as:** {st.session_state.get('username', 'User')}")
+        st.markdown(f"**User:** {st.session_state.get('username', 'User')}")
         st.markdown(f"**API:** {st.session_state.api_url}")
-        if st.button("Logout", use_container_width=True):
+        if st.button("Change user", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.auth = None
             st.rerun()
@@ -88,7 +88,7 @@ def show_logout():
 def check_api_health():
     try:
         response = requests.get(
-            f"{st.session_state.api_url}/predict/health",
+            f"{st.session_state.api_url}health",
             auth=st.session_state.auth,
             verify=False,  # Skip SSL verification for self-signed cert
             timeout=5
@@ -122,7 +122,7 @@ def prediction_page():
 
     # Single Text Prediction
     if prediction_mode == "Single Text":
-        st.markdown("### Single Text Prediction")
+        st.markdown("### Single Text Prediction: `/predict_text`")
         
         text_input = st.text_area(
             "Enter product text:",
@@ -149,12 +149,16 @@ def prediction_page():
                         }
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_text", 
+                            f"{st.session_state.api_url}predict_text", 
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,  
                             timeout=120
                         )
+
+                        # Show request
+                        with st.expander("View Request Payload"):
+                            st.json(payload)
                         
                         if response.status_code == 200:
                             result = response.json()
@@ -207,7 +211,7 @@ def prediction_page():
 
     # Product Prediction
     elif prediction_mode == "Product (Designation + Description)":
-        st.markdown("### Product Prediction")
+        st.markdown("### Product Prediction: `/predict_product`")
         
         designation = st.text_input(
             "Product Designation:",
@@ -240,7 +244,7 @@ def prediction_page():
                         }
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_product",  
+                            f"{st.session_state.api_url}predict_product",  
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,
@@ -295,7 +299,7 @@ def prediction_page():
 
     # Batch Prediction
     else:
-        st.markdown("### Batch Prediction")
+        st.markdown("### Batch Prediction: `/predict_batch`")
         
         st.info("Enter one product text per line")
         
@@ -329,7 +333,7 @@ def prediction_page():
                         }
                         
                         response = requests.post(
-                            f"{st.session_state.api_url}/predict/predict_batch",  # Updated endpoint
+                            f"{st.session_state.api_url}predict_batch",  # Updated endpoint
                             json=payload,
                             auth=st.session_state.auth,
                             verify=False,
@@ -392,4 +396,3 @@ if not st.session_state.logged_in:
     login_page()
 else:
     prediction_page()
-
