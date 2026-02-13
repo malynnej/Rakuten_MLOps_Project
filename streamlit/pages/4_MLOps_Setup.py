@@ -22,7 +22,7 @@ with st.expander("**Problem & Setup**", expanded=False):
     with col1:
         st.markdown("**Problem:**")
         st.write("""
-        * code management, storing and sharing
+        * code management, storage and collaboration
         * project reproducibility and package management
         """)
 
@@ -58,7 +58,7 @@ with st.expander("**Problem & Setup**", expanded=False):
     with col1:
         st.markdown("**Problem:**")
         st.write("""
-        Provides production-ready REST API for model serving and operations, serving with `uvicorn`
+        Production-ready REST API for model serving and operations
         """)
 
         st.markdown("**Approach:**")
@@ -74,6 +74,7 @@ with st.expander("**Problem & Setup**", expanded=False):
           * DATA `/preprocess/from-raw`: raw data preprocessing
           * (ALL) `/health`: check service availability
         * Automatic documentation and validation
+        * Serving with `uvicorn`
         """)
 
         st.markdown("**Challenges:**")
@@ -99,7 +100,9 @@ with st.expander("**Problem & Setup**", expanded=False):
     with col1:
         st.markdown("**Problem:**")
         st.write("""
-        Containerization of the different APIs as microservices disentagles dependencies, makes services portable, scalable, reproducible.
+        Containerization of the different APIs as microservices to
+        * disentagles dependencies
+        * make services portable, scalable, reproducible
         """)
 
         st.markdown("**Approach:**")
@@ -108,7 +111,7 @@ with st.expander("**Problem & Setup**", expanded=False):
           
         Docker images for each API service:
         * Separate environment setup (build stage) from execution of Docker containers
-        * (Ideally:) Isolate containers on execution - internet access during build stage only
+        * Isolate containers on execution - internet access during build stage only (ideally)
         * Pre-defined images for additional deployments: `nignx`, `prometheus`, `grafana`, ...
 
         Docker compose:  
@@ -124,50 +127,50 @@ with st.expander("**Problem & Setup**", expanded=False):
 
     with col2:
         code = """
-        # file: docker-compose.yml
+    # file: docker-compose.yml
 
-        services:
+    services:
         api_predict:
             build:
-            context: src/predict
-            dockerfile: Dockerfile
+                context: src/predict
+                dockerfile: Dockerfile
             deploy:
-            replicas: 1   # increase for load balancing
+                replicas: 1   # increase for load balancing
             container_name: predict_api
             networks: 
-            - api_network
+                - api_network
             volumes:
-            - ./models:/app/models:ro
-            - ./config:/app/config:ro
+                - ./models:/app/models:ro
+                - ./config:/app/config:ro
             healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-            interval: 5s
-            timeout: 2s
-            retries: 12
+                test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+                interval: 5s
+                timeout: 2s
+                retries: 12
 
         nginx:
             build:
-            context: deployments/nginx/
-            dockerfile: Dockerfile
+                context: deployments/nginx/
+                dockerfile: Dockerfile
             container_name: nginx_reverse_proxy
             ports:
-            - "8080:8080"
-            - "8443:8443"
+                - "8080:8080"
+                - "8443:8443"
             networks: 
-            - api_network
-            - edge_network
-            - monitoring_network
+                - api_network
+                - edge_network
+                - monitoring_network
             depends_on:
-            api_predict:
-                condition: service_healthy
+                api_predict:
+                    condition: service_healthy
 
         networks:
-        api_network:
-            # internal network not exposed to host
-            internal: true
-        edge_network:
-            # network exposed to host for reverse proxy
-        """
+            api_network:
+                # internal network not exposed to host
+                internal: true
+            edge_network:
+                # network exposed to host for reverse proxy
+    """
         st.code(code, language="python")
 
 st.write("---")
@@ -175,32 +178,41 @@ st.write("---")
 # ==========Data And Model Versioning==========
 st.subheader("Data And Model Versioning With DVC/Dagshub")
 with st.expander("**Problem & Setup**", expanded=False):
-    st.markdown("**Problem:**")
-    st.write("""
-    * track large datasets and models
-    * reproducibility: ensuring use of same data versions
-    * team collaboration: sharing of data and models with remote storage
-    """)
 
-    st.markdown("**Approach:**")
-    st.markdown("""
-    DVC for version control: tracking with `.dvc` files
-    * raw data
-    * preprocessed `.parquet` files
-    * model artifacts
-    * label encoder files
-    * evaluation results
-    DagsHub as remote storage: centralized cloud storage for team access  
-    lightweight files to GitHub: Only metadata (.dvc files) committed to repository  
-    """)
+    col1, col2 = st.columns(2)
 
-    st.markdown("**Challenges:**")
-    st.write("""
-    Further addition of MLFlow to Dagshub rises risk of slowing down training
-    """)
+    with col1:
+        st.markdown("**Problem:**")
+        st.write("""
+        * track large datasets and models
+        * reproducibility: ensuring use of same data versions
+        * team collaboration: sharing of data and models with remote storage
+        """)
 
-    image_GF = Image.open('./streamlit/images/Dagshub.png')
-    st.image(image_GF, width=1100)
+        st.markdown("**Approach:**")
+        st.markdown("""
+        DVC for version control: tracking with `.dvc` files
+        * raw data
+        * preprocessed `.parquet` files
+        * model artifacts
+        * label encoder files
+        * evaluation results
+                    
+        DagsHub as remote storage: 
+        * centralized cloud storage for team access  
+        * lightweight files to GitHub: Only metadata (`.dvc` files) in git
+        """)
+
+        st.markdown("**Challenges:**")
+        st.write("""
+        * Powerful platform with many features (data, experiments, models, ...)
+        * Management of user access tokens
+        """)
+
+    with col2:
+        #image_GF = Image.open('./streamlit/images/Dagshub.png')
+        image_GF = Image.open('./streamlit/images/dagshub_dvc.png')
+        st.image(image_GF, width=1100)
 
 st.write("---")
 

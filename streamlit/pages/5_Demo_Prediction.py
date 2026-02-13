@@ -32,14 +32,14 @@ if 'auth' not in st.session_state:
 
 # Login Form
 def login_page():
-    st.markdown("### Please Login to Access Prediction Service")
+    st.markdown("### Set Credentials to Access Prediction Service")
     
     with st.form("login_form"):
         api_url = st.text_input("API URL", value="https://localhost:8443/predict/")
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         
-        submitted = st.form_submit_button("Login", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("Set and verify credentials", type="primary", use_container_width=True)
         
         if submitted:
             if not username or not password:
@@ -77,9 +77,9 @@ def login_page():
 # Logout button in sidebar
 def show_logout():
     with st.sidebar:
-        st.markdown(f"**Logged in as:** {st.session_state.get('username', 'User')}")
+        st.markdown(f"**User:** {st.session_state.get('username', 'User')}")
         st.markdown(f"**API:** {st.session_state.api_url}")
-        if st.button("Logout", use_container_width=True):
+        if st.button("Change user", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.auth = None
             st.rerun()
@@ -122,7 +122,7 @@ def prediction_page():
 
     # Single Text Prediction
     if prediction_mode == "Single Text":
-        st.markdown("### Single Text Prediction")
+        st.markdown("### Single Text Prediction: `/predict_text`")
         
         text_input = st.text_area(
             "Enter product text:",
@@ -147,10 +147,6 @@ def prediction_page():
                             "return_probabilities": return_probs,
                             "top_k": top_k
                         }
-
-                        # Show request
-                        with st.expander("View Request Payload"):
-                            st.json(payload)
                         
                         response = requests.post(
                             f"{st.session_state.api_url}predict_text", 
@@ -159,6 +155,10 @@ def prediction_page():
                             verify=False,  
                             timeout=120
                         )
+
+                        # Show request
+                        with st.expander("View Request Payload"):
+                            st.json(payload)
                         
                         if response.status_code == 200:
                             result = response.json()
@@ -211,7 +211,7 @@ def prediction_page():
 
     # Product Prediction
     elif prediction_mode == "Product (Designation + Description)":
-        st.markdown("### Product Prediction")
+        st.markdown("### Product Prediction: `/predict_product`")
         
         designation = st.text_input(
             "Product Designation:",
@@ -299,7 +299,7 @@ def prediction_page():
 
     # Batch Prediction
     else:
-        st.markdown("### Batch Prediction")
+        st.markdown("### Batch Prediction: `/predict_batch`")
         
         st.info("Enter one product text per line")
         
