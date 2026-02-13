@@ -64,8 +64,8 @@ st.write("---")
 st.subheader("Data Pipeline")
 
 st.write("")
-image_DP = Image.open('./streamlit/images/Datapipe_v2.jpg')
-st.image(image_DP, width=1100)
+image_DP = Image.open('./streamlit/images/Datapipe_v3.jpg')
+st.image(image_DP, width=1400)
 st.write("")
 
 st.write("---")
