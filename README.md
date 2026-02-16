@@ -113,6 +113,30 @@ Following the [official installation instructions](
   `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
 
 
+### DVC / DagsHub
+
+To access data tracked by DVC, access to the remote storage on DagsHub has to 
+be configured.
+
+* Configure up DagsHub credentials (locally)
+
+      dvc remote modify origin --local auth basic 
+      dvc remote modify origin --local user <username>
+      dvc remote modify origin --local password <token>
+
+* Create `.env` file with the following information 
+  (adapt for using remote MLflow on DagsHub)
+
+      # DVC Configuration
+      DVC_HTTP_USER=<username>
+      DVC_HTTP_PASSWORD=<token>
+      # Mlflow Configuration
+      #MLFLOW_TRACKING_URI=https://dagshub.com/jenny-lam/Rakuten_MLOps_Project.mlflow
+      MLFLOW_TRACKING_URI=http://mlflow:5000
+      MLFLOW_TRACKING_USERNAME=<username>
+      MLFLOW_TRACKING_PASSWORD=<token>
+
+
 Run the project
 ---------------
 
