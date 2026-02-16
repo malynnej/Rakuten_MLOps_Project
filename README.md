@@ -147,9 +147,6 @@ be configured.
 
 Run the project
 ---------------
-* First, pull data from DVC/Dagshub:
-
-      dvc pull
 
 All necessary components of the projects are running in Docker containers.
 
