@@ -62,6 +62,14 @@ as individual services and independent sub-projects
 
 -> Automated tests
 
+    ├── .dvc
+
+-> DVC config
+
+    ├── .github/workflows
+
+-> Github actions (currently Ruff linting and formatting implemented)
+
     ├── scripts
     ├── notebooks
 
@@ -151,6 +159,70 @@ All necessary components of the projects are running in Docker containers.
       docker compose build
       docker compose up
 
+nginx serves as a reverse proxy for the API, so the API docs and following services can be accessed via:
+
+* Monitoring with Prometheus/Grafana: https://localhost:8443/grafana/ 
+  - Login Grafana - username: admin, pw: admin
+  - Login nginx - username: admin1, pw: admin1
+
+* MLFlow UI: http://localhost:5000
+
+* Data API: https://localhost:8443/data/docs
+
+* Train API: https://localhost:8443/train/docs
+
+* Predict API: https://localhost:8443/predict/docs
+
+* Evaluate API: https://localhost:8443/evaluate/docs
+
+Basic user management is set up with nginx, having following roles (username = password):
+
+* credentials for the 3 user classes are hard-coded (generated with `/scripts/generate_nginx_htpasswd.sh`)
+  - users (user1, user2) have access to endpoint /predict/
+  - devs (dev1, dev2) have access to endpoints /data/, /train/, /evaluate/
+  - admins (admin1) have access to endpoint /nginx_status/
+
+Examples of using the API endpoints via command:
+
+* Preprocessing raw data (text preprocessing, label encoding, data split)
+  - combine_existing_data: false (default) - processes only raw data, true - combines with existing preprocessed data
+  - save_holdout: true (default) - saves holdout set from raw data for testing purposes
+
+        curl -k https://localhost:8443/data/preprocess/from-raw \
+          -u dev1:dev1 \
+          -X POST -H "Content-Type: application/json" \
+          -d '{"combine_existing_data": false,"save_holdout": true}'
+
+* Train BERT-based text model:
+  - retrain: false (default) - activates initial model training, true - uses existing trained model for fine-tuning only
+  - model_name: name of the model
+
+        curl -k https://localhost:8443/train/train_model \
+          -u dev1:dev1 \
+          -X POST -H "Content-Type: application/json" \
+          -d '{"retrain": false,"model_name": "bert-rakuten-final"}'
+
+* Evaluate text model:
+  - batch_size: 32 (default) - batch size for evaluation
+  - model_name: name of the model to evaluate   
+
+        curl -k https://localhost:8443/evaluate/evaluate_model \
+          -u dev1:dev1 \
+          -X POST -H "Content-Type: application/json" \
+          -d '{"batch_size": 32,"model_name": "bert-rakuten-final"}'   
+
+* Predict text:
+  - text: text input for prediction
+  - return_probabilities: true (default) - return probabilities of prediction
+  - top_k: 3 - return top k predicted classes
+
+        curl -k https://localhost:8443/predict/predict_text \
+          -u dev1:dev1 \
+          -X POST -H "Content-Type: application/json" \
+          -d '{"text": "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>", "return_probabilities": true,"top_k": 3}'
+
+Further:
+
 * Test results are written to the log files in the `logs` directory, e.g.
   - Tests on predict API: 
     `logs/test_api_predict.log`
@@ -213,7 +285,10 @@ Data versioning of data, models, and evaluation output.
       data/raw/
       data/preprocessed/
       models/bert-rakuten-final
+      models/label_encoder.pkl
+      models/label_mappings.json
       metrics/metrics.json
+      results
 
 * To reproduce the full pipeline, run: 
 
@@ -264,7 +339,7 @@ Run prediction test, execute from `src/predict` folder
     uv run python -m services.predict_text --text "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>" --probabilities --top_k 3
 
 
-### Eperiment Tracking (MLflow)
+### Experiment Tracking (MLflow)
 
 Prepares the tracking infrastructure, experiment logging will be extended in 
 follow-up work
@@ -318,19 +393,19 @@ Start API for each service (from respective directory)
 
   - Initial training
 
-        curl -X POST http://localhost:8002/train \
+        curl -X POST http://localhost:8002/train_model \
           -H "Content-Type: application/json" \
-          -d '{"retrain": false,"model_name": "bert-rakuten-v1.0.0"}'
+          -d '{"retrain": false,"model_name": "bert-rakuten-final"}'
 
   - Run evaluation
 
-        curl -X POST http://localhost:8004/evaluate \
+        curl -X POST http://localhost:8004/evaluate_model \
           -H "Content-Type: application/json" \
           -d '{"batch_size": 32,"model_name": "bert-rakuten-final"}'`
 
   - Single prediction (text)
 
-        curl -X POST http://localhost:8000/predict/text \
+        curl -X POST http://localhost:8000/predict_text \
           -H "Content-Type: application/json" \
           -d '{"text": "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>", "return_probabilities": true,"top_k": 3}'
 
