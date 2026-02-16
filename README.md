@@ -396,19 +396,19 @@ Start API for each service (from respective directory)
 
   - Initial training
 
-        curl -X POST http://localhost:8002/train/train_model \
+        curl -X POST http://localhost:8002/train_model \
           -H "Content-Type: application/json" \
           -d '{"retrain": false,"model_name": "bert-rakuten-final"}'
 
   - Run evaluation
 
-        curl -X POST http://localhost:8004/evaluate/evaluate_model \
+        curl -X POST http://localhost:8004/evaluate_model \
           -H "Content-Type: application/json" \
           -d '{"batch_size": 32,"model_name": "bert-rakuten-final"}'`
 
   - Single prediction (text)
 
-        curl -X POST http://localhost:8000/predict/predict_text \
+        curl -X POST http://localhost:8000/predict_text \
           -H "Content-Type: application/json" \
           -d '{"text": "Bloc skimmer PVC sans eclairage;<p>Facile à installer : aucune découpe de paroi ni de liner. <br />Se fixe directement sur la margelle. Adaptateur balai<br />. Livré avec panier de skimmer. </p><br /><ul><li><br /></li><li>Dimensions : 61 x 51 cm</li><li><br /></li><li>Inclus : Skimmer buse de refoulement</li><li><br /></li></ul>", "return_probabilities": true,"top_k": 3}'
 
